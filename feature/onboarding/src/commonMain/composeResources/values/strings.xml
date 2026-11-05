@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">Split expenses, not friendships</string>
+    <string name="onboarding_subtitle">Track shared costs with friends, roommates and travel buddies. Everyone sees who owes what, in their own currency.</string>
+    <string name="onboarding_register">Register</string>
+    <string name="onboarding_skip">Skip for now</string>
+</resources>
