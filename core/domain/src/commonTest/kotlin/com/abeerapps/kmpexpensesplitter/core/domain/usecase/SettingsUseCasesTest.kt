@@ -1,18 +1,22 @@
 package com.abeerapps.kmpexpensesplitter.core.domain.usecase
 
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Group
 import com.abeerapps.kmpexpensesplitter.core.domain.model.GroupSummary
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
 import com.abeerapps.kmpexpensesplitter.core.domain.model.UserProfile
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseReportExporter
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExportResult
-import com.abeerapps.kmpexpensesplitter.core.domain.repository.GroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.LocalDataCleaner
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeExpenseRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeGroupRepository
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -86,17 +90,12 @@ class SettingsUseCasesTest {
                 return ExportResult.Saved("r.pdf", "Downloads")
             }
         }
-        val noGroups = object : GroupRepository {
-            override fun observeGroups(): Flow<List<GroupSummary>> = flowOf(emptyList())
-        }
-        assertEquals(ExportResult.Failed, ExportExpenseReportUseCase(noGroups, exporter)())
+        val groups = FakeGroupRepository()
+        val observeGroups = ObserveGroupsUseCase(groups, FakeExpenseRepository(), FakeProfiles(UserProfile("Ahmad", jod)))
+        assertEquals(ExportResult.Failed, ExportExpenseReportUseCase(observeGroups, exporter)())
         assertFalse(exporterCalled)
 
-        val someGroups = object : GroupRepository {
-            override fun observeGroups() = flowOf(
-                listOf(GroupSummary("1", "Trip", listOf("A"), Money(1_00, jod), Money(0, jod))),
-            )
-        }
-        assertEquals(ExportResult.Saved("r.pdf", "Downloads"), ExportExpenseReportUseCase(someGroups, exporter)())
+        groups.groups.value = listOf(Group("1", "Trip", listOf(Participant(Participant.YOU_ID, "Ahmad")), LocalDate(2026, 4, 1)))
+        assertEquals(ExportResult.Saved("r.pdf", "Downloads"), ExportExpenseReportUseCase(observeGroups, exporter)())
     }
 }

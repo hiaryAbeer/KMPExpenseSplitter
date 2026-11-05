@@ -3,9 +3,15 @@ package com.abeerapps.kmpexpensesplitter.feature.home
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
-import com.abeerapps.kmpexpensesplitter.core.domain.model.GroupSummary
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Expense
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseCategory
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseShare
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Group
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
+import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
 import com.abeerapps.kmpexpensesplitter.core.domain.model.UserProfile
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.GroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CalculateBalanceSummaryUseCase
@@ -19,6 +25,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -32,6 +39,7 @@ class HomeViewModelTest {
     private val jod = CurrencyCode.of("JOD")!!
     private val profiles = FakeProfiles(UserProfile("Ahmad", jod))
     private val groups = FakeGroups()
+    private val expenses = FakeExpenses()
 
     @BeforeTest
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -41,12 +49,26 @@ class HomeViewModelTest {
 
     private fun viewModel() = HomeViewModel(
         ObserveUserProfileUseCase(profiles),
-        ObserveGroupsUseCase(groups),
+        ObserveGroupsUseCase(groups, expenses, profiles),
         CalculateBalanceSummaryUseCase(),
     )
 
-    private fun group(id: String, name: String, balance: Long) =
-        GroupSummary(id, name, listOf("Ahmad", "Sara"), Money(100_00, jod), Money(balance, jod))
+    private val you = Participant(Participant.YOU_ID, "Ahmad")
+    private val sara = Participant("s", "Sara")
+
+    /** A group with you and Sara whose single expense leaves you with [balance]. */
+    private fun group(id: String, name: String, balance: Long): Group {
+        if (balance != 0L) {
+            val (payer, debtor) = if (balance > 0) you.id to sara.id else sara.id to you.id
+            val amount = Money(kotlin.math.abs(balance), jod)
+            expenses.expenses.value += Expense(
+                id = "e$id", groupId = id, title = "x", amount = amount, category = ExpenseCategory.Food,
+                paidBy = payer, splitType = SplitType.Exact, shares = listOf(ExpenseShare(debtor, amount)),
+                date = LocalDate(2026, 4, 29), note = null,
+            )
+        }
+        return Group(id, name, listOf(you, sara), LocalDate(2026, 4, 1))
+    }
 
     /** Skips the initial loading state (it may be conflated away entirely). */
     private suspend fun ReceiveTurbine<HomeUiState>.awaitLoaded(): HomeUiState {
@@ -137,7 +159,14 @@ class HomeViewModelTest {
     }
 
     private class FakeGroups : GroupRepository {
-        val groups = MutableStateFlow<List<GroupSummary>>(emptyList())
-        override fun observeGroups(): Flow<List<GroupSummary>> = groups
+        val groups = MutableStateFlow<List<Group>>(emptyList())
+        override fun observeGroups(): Flow<List<Group>> = groups
+        override suspend fun createGroup(group: Group) { groups.value = listOf(group) + groups.value }
+    }
+
+    private class FakeExpenses : ExpenseRepository {
+        val expenses = MutableStateFlow<List<Expense>>(emptyList())
+        override fun observeExpenses(): Flow<List<Expense>> = expenses
+        override suspend fun addExpense(expense: Expense) { expenses.value += expense }
     }
 }

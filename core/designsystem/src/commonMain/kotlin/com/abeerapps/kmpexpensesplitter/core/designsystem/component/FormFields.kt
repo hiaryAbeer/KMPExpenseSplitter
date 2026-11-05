@@ -41,12 +41,12 @@ fun FieldLabel(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * The shared input "shell": 16dp radius, subtle fill, hairline border, and a
- * 16dp leading icon in a 48dp gutter. The border turns primary while [highlighted].
+ * The shared input "shell": 16dp radius, subtle fill, hairline border, and an
+ * optional 16dp leading icon in a 48dp gutter. The border turns primary while [highlighted].
  */
 @Composable
 fun FieldContainer(
-    leadingIcon: Painter,
+    leadingIcon: Painter?,
     highlighted: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit,
@@ -64,24 +64,26 @@ fun FieldContainer(
             .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            painter = leadingIcon,
-            contentDescription = null, // Decorative; the field label describes it.
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(16.dp),
-        )
-        Spacer(Modifier.width(16.dp)) // 16 + 16 + 16 = 48dp text inset, as designed.
+        if (leadingIcon != null) {
+            Icon(
+                painter = leadingIcon,
+                contentDescription = null, // Decorative; the field label describes it.
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(Modifier.width(16.dp)) // 16 + 16 + 16 = 48dp text inset, as designed.
+        }
         content()
     }
 }
 
-/** Single-line text input in the app's field style, with placeholder and leading icon. */
+/** Single-line text input in the app's field style, with placeholder and optional leading icon. */
 @Composable
 fun AppTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    leadingIcon: Painter,
+    leadingIcon: Painter?,
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,

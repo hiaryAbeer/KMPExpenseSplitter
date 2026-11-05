@@ -6,7 +6,6 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.UserProfile
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.AppPreferencesRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseReportExporter
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExportResult
-import com.abeerapps.kmpexpensesplitter.core.domain.repository.GroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.LocalDataCleaner
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import kotlinx.coroutines.flow.Flow
@@ -82,11 +81,11 @@ class ClearLocalDataUseCase(private val cleaner: LocalDataCleaner) {
  * export; with no groups the export is refused without touching storage.
  */
 class ExportExpenseReportUseCase(
-    private val groupRepository: GroupRepository,
+    private val observeGroups: ObserveGroupsUseCase,
     private val exporter: ExpenseReportExporter,
 ) {
     suspend operator fun invoke(): ExportResult {
-        val groups = groupRepository.observeGroups().first()
+        val groups = observeGroups().first()
         if (groups.isEmpty()) return ExportResult.Failed
         return try {
             exporter.export(groups)

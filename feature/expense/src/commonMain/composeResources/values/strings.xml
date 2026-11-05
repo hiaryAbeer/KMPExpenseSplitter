@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_expense_title">Add Expense</string>
+    <string name="add_expense_back">Back</string>
+
+    <string name="add_expense_label_title">Title</string>
+    <string name="add_expense_title_placeholder">What’s this expense for?</string>
+    <string name="add_expense_label_group">Group</string>
+    <string name="add_expense_no_group">No group</string>
+    <plurals name="group_member_count">
+        <item quantity="one">%1$d member</item>
+        <item quantity="other">%1$d members</item>
+    </plurals>
+    <string name="group_sheet_title">Select group</string>
+    <string name="group_sheet_empty">No groups yet. Add one to split this expense.</string>
+    <string name="group_add">Add group</string>
+    <string name="new_group_title">New group</string>
+    <string name="new_group_name_label">Group name</string>
+    <string name="new_group_name_placeholder">e.g. Aqaba Trip</string>
+    <string name="new_group_members_label">Members</string>
+    <string name="new_group_member_placeholder">Member name</string>
+    <string name="new_group_add_member">Add member</string>
+    <!-- %1$s = member name -->
+    <string name="new_group_remove_member">Remove %1$s</string>
+    <!-- %1$s = your name -->
+    <string name="new_group_you">%1$s (you)</string>
+    <string name="new_group_member_blank">Enter a name.</string>
+    <string name="new_group_member_too_long">Names can be up to 50 characters.</string>
+    <string name="new_group_member_duplicate">This person is already in the group.</string>
+    <string name="new_group_member_too_many">A group can have up to 20 other members.</string>
+    <string name="new_group_create">Add</string>
+    <string name="new_group_failed">Couldn’t create the group. Please try again.</string>
+    <string name="add_expense_label_amount">Amount</string>
+    <string name="add_expense_amount_placeholder">0.00</string>
+    <string name="add_expense_label_category">Category</string>
+    <string name="category_food">Food</string>
+    <string name="category_transport">Transport</string>
+    <string name="category_hotel">Hotel</string>
+    <string name="category_bills">Bills</string>
+    <string name="category_shopping">Shopping</string>
+    <string name="category_entertainment">Entertainment</string>
+
+    <string name="add_expense_label_paid_by">Paid By</string>
+    <string name="add_expense_paid_by_sheet_title">Who paid?</string>
+
+    <string name="add_expense_label_split_type">Split Type</string>
+    <string name="split_equal">Equal</string>
+    <string name="split_percentage">Percentage</string>
+    <string name="split_exact">Exact</string>
+    <string name="split_equal_hint">Total is divided equally among selected members.</string>
+    <string name="split_percentage_hint">Assign a % to each person — must total 100%.</string>
+    <string name="split_exact_hint">Enter an exact amount for each person — must match total.</string>
+    <string name="add_expense_label_split_between">Split Between</string>
+    <string name="split_between_no_group">Select a group to choose who shares this expense.</string>
+    <string name="split_percent_placeholder">0</string>
+    <string name="split_percent_sign">%</string>
+    <!-- %1$s = person's name -->
+    <string name="split_share_description">Share of %1$s</string>
+
+    <string name="add_expense_label_date">Date</string>
+    <!-- %1$s = full date, e.g. April 29, 2026 -->
+    <string name="date_today">Today, %1$s</string>
+    <string name="date_yesterday">Yesterday, %1$s</string>
+    <string name="date_picker_confirm">OK</string>
+    <string name="date_picker_cancel">Cancel</string>
+
+    <string name="add_expense_label_note">Note (Optional)</string>
+    <string name="add_expense_note_placeholder">Add a note...</string>
+    <string name="add_expense_save">Save Expense</string>
+    <string name="add_expense_save_failed">Couldn’t save the expense. Please try again.</string>
+</resources>

@@ -13,6 +13,7 @@ import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveOnboardingSta
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveThemePreferenceUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveUserProfileUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.SearchCurrenciesUseCase
+import com.abeerapps.kmpexpensesplitter.feature.expense.di.expenseModule
 import com.abeerapps.kmpexpensesplitter.feature.home.di.homeModule
 import com.abeerapps.kmpexpensesplitter.feature.onboarding.di.onboardingModule
 import com.abeerapps.kmpexpensesplitter.feature.registration.di.registrationModule
@@ -49,6 +50,7 @@ internal fun allModules(config: AppConfig): List<Module> = listOf(
     registrationModule,
     homeModule,
     settingsModule,
+    expenseModule,
 )
 
 /**

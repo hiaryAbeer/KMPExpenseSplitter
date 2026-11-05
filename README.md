@@ -22,11 +22,11 @@ androidApp (Android entry)      iosApp (Swift entry, Xcode)
 
 | Module | Responsibility | May depend on |
 |---|---|---|
-| `:core:domain` | `UserProfile`, `CurrencyCode`, `SupportedCurrencies`, `UserProfileRepository` (interface), use cases, `FeatureFlags` | coroutines only |
+| `:core:domain` | `UserProfile`, `CurrencyCode`, `SupportedCurrencies`, `Expense`, `SplitCalculator`, repository interfaces, use cases, `FeatureFlags` | coroutines, kotlinx-datetime |
 | `:core:data` | Repository implementations, persistence, platform file paths (`expect/actual`), Koin `dataModule` | domain |
 | `:core:designsystem` | Theme from the Figma tokens (colors, type, 16dp shapes, spacing), shared icons, components (`PrimaryButton`, `AppTextField`, `AppCard`, `EmptyState`, `AppNavigationBar`), `ObserveAsEvents` | Compose |
 | `:core:ui` | Compose UI that knows domain types and is shared by features (currency picker sheet) | domain, designsystem |
-| `:feature:*` | One user-facing feature: screen + ViewModel + Koin module (`onboarding`, `registration`, `home`, `settings`) | domain, designsystem, ui (**never** data or other features) |
+| `:feature:*` | One user-facing feature: screen + ViewModel + Koin module (`onboarding`, `registration`, `home`, `settings`, `expense`) | domain, designsystem, ui (**never** data or other features) |
 | `:shared` | Wires everything: `initKoin`, `AppNavHost`, `AppViewModel` (start destination), `Shared.framework` | everything |
 
 **Presentation pattern (UDF/MVI-lite)**: each screen has `UiState` (`StateFlow`), `Action`s from the UI,
@@ -64,14 +64,38 @@ After registration the app opens the main shell: bottom navigation with **Home**
 **Settings** (Groups/Settings are placeholders). Home shows the greeting with the registered name,
 "You are owed" / "You owe" totals in the default currency, group search, and **Recent Groups**.
 
-Groups are not persisted yet: `InMemoryGroupRepository` (in `:core:data`) starts empty, so Home
-shows the generic `EmptyState` ("No groups yet", no button: the "+" button already creates groups).
-When group storage is built, replace that one binding in `dataModule`; the group cards from the
-design are already implemented (see the `HomeWithGroupsPreview` preview).
+Group cards are computed by `ObserveGroupsUseCase` from the groups and their expenses
+(`GroupSummaries.build`): total spent, and your balance = what you paid − your shares. Groups are
+ordered by latest activity. With no groups, Home shows the generic `EmptyState` ("No groups yet",
+no button). The "+" button opens **Add Expense**, where groups are created.
 
 Money is stored as integer hundredths (`Money.minorUnits`) and always shown with two decimals,
 as in the design. Totals only include groups in the user's default currency until currency
 conversion exists.
+
+## Add Expense
+
+Opened from the Home "+" button (`:feature:expense`). Title, **group** (required), amount (in the
+default currency), category, payer, split type, people to split between, date (today or earlier)
+and an optional note.
+
+- **Group**: preselects the first (newest) group when groups exist, else "No group". The group
+  sheet's **Add group** opens a form: group name + members. You are listed first and can be removed
+  like anyone else (typing your own name adds you back). "Add" is enabled with a name and at least
+  one member; it creates the group (`CreateGroupUseCase`) and selects it. Member names must be unique
+  (ignoring case, including yours while you're in the group).
+- **Split Between** lists the selected group's members, all ticked; it is disabled without a group.
+
+- **Split rules live in the domain** (`SplitCalculator`): *Equal* divides between ticked people,
+  *Percentage* needs exactly 100%, *Exact* needs amounts that add up to the total. Everything is in
+  integer hundredths; leftover cents go to the people with the largest rounding loss, so shares
+  always add up to the total exactly.
+- `AddExpenseUseCase.validate` is the single set of rules: the ViewModel runs it on every change to
+  enable **Save** (outlined until valid, then filled) and to turn the split hint red, and the use case
+  enforces it again on save.
+- Groups and expenses are kept in `InMemoryGroupRepository` / `InMemoryExpenseRepository` (session
+  only) and wiped by "Clear local data". Swap those two bindings for database storage; nothing above
+  the data layer changes.
 
 ## Settings
 

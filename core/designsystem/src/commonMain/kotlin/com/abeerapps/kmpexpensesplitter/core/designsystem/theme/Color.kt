@@ -23,6 +23,7 @@ private val Coral10 = Color(0xFF3A0B00)
 private val Ink = Color(0xFF1A1A1A)         // Primary text
 private val Gray50 = Color(0xFFF9FAFB)      // Input fill (light), primary text (dark)
 private val Gray100 = Color(0xFFF8F9FA)     // Screen background
+private val Gray150 = Color(0xFFF3F4F6)     // Unselected chips/tiles (Tailwind gray-100)
 private val Gray200 = Color(0xFFE5E7EB)     // Hairline borders
 private val Gray400 = Color(0xFF9CA3AF)
 private val Gray500 = Color(0xFF6B7280)     // Secondary text, icons
@@ -47,6 +48,7 @@ internal val LightColors = lightColorScheme(
     onSurfaceVariant = Gray500,
     surfaceContainerLowest = Color.White,
     surfaceContainerLow = Gray50,
+    surfaceContainerHigh = Gray150, // Unselected category tiles and split-type chips.
     outline = Gray500,
     outlineVariant = Gray200,
 )
@@ -69,6 +71,7 @@ internal val DarkColors = darkColorScheme(
     onSurfaceVariant = Gray400,    // #9CA3AF secondary text and icons
     surfaceContainerLowest = Gray800,
     surfaceContainerLow = Gray800, // input fill
+    surfaceContainerHigh = Gray700, // unselected tiles/chips, one step above cards
     outlineVariant = Gray700,      // #374151 hairline borders
     outline = Gray400,
 )

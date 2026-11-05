@@ -17,9 +17,9 @@ sealed interface AppDestination {
     @Serializable
     data object Home : AppDestination
 
-    /** Placeholder until group creation is built. */
+    /** "Add Expense", opened from the Home "+" button. */
     @Serializable
-    data object CreateGroup : AppDestination
+    data object AddExpense : AppDestination
 
     /** Placeholder until group details are built. */
     @Serializable

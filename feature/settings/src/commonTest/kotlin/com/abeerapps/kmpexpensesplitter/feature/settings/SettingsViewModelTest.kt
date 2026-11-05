@@ -11,7 +11,12 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.UserProfile
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.AppPreferencesRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseReportExporter
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExportResult
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Expense
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Group
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.GroupRepository
+import kotlinx.datetime.LocalDate
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.LocalDataCleaner
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ClearLocalDataUseCase
@@ -50,9 +55,15 @@ class SettingsViewModelTest {
         override suspend fun saveProfile(profile: UserProfile) { this.profile.value = profile }
     }
     private val groups = object : GroupRepository {
-        val groups = MutableStateFlow<List<GroupSummary>>(emptyList())
-        override fun observeGroups(): Flow<List<GroupSummary>> = groups
+        val groups = MutableStateFlow<List<Group>>(emptyList())
+        override fun observeGroups(): Flow<List<Group>> = groups
+        override suspend fun createGroup(group: Group) { groups.value = listOf(group) + groups.value }
     }
+    private val expenses = object : ExpenseRepository {
+        override fun observeExpenses(): Flow<List<Expense>> = MutableStateFlow(emptyList())
+        override suspend fun addExpense(expense: Expense) = Unit
+    }
+    private val observeGroups get() = ObserveGroupsUseCase(groups, expenses, profiles)
     private val prefs = object : AppPreferencesRepository {
         val theme = MutableStateFlow(ThemePreference.System)
         override fun observeTheme(): Flow<ThemePreference> = theme
@@ -78,12 +89,12 @@ class SettingsViewModelTest {
 
     private fun viewModel() = SettingsViewModel(
         observeUserProfile = ObserveUserProfileUseCase(profiles),
-        observeGroups = ObserveGroupsUseCase(groups),
+        observeGroups = observeGroups,
         observeTheme = ObserveThemePreferenceUseCase(prefs),
         updateProfile = UpdateUserProfileUseCase(profiles),
         setTheme = SetThemePreferenceUseCase(prefs),
         searchCurrencies = SearchCurrenciesUseCase(),
-        exportReport = ExportExpenseReportUseCase(groups, exporter),
+        exportReport = ExportExpenseReportUseCase(observeGroups, exporter),
         clearLocalData = ClearLocalDataUseCase(cleaner),
         appInfo = object : AppInfo { override val versionName = "1.0.0" },
     )
@@ -118,7 +129,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `export is enabled when groups exist and saves the report`() = runTest {
-        groups.groups.value = listOf(GroupSummary("1", "Trip", listOf("A"), Money(1_00, jod), Money(0, jod)))
+        groups.groups.value = listOf(Group("1", "Trip", listOf(Participant(Participant.YOU_ID, "Ahmad")), LocalDate(2026, 4, 1)))
         val vm = viewModel()
         vm.uiState.test {
             assertTrue(awaitLoaded().canExport)

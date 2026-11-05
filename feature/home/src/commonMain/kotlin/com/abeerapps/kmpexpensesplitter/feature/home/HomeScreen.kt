@@ -57,7 +57,7 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
 import com.abeerapps.kmpexpensesplitter.core.domain.model.GroupSummary
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
 import com.abeerapps.kmpexpensesplitter.feature.home.resources.Res
-import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_create_group
+import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_add_expense
 import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_empty_message
 import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_empty_title
 import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_greeting
@@ -78,18 +78,18 @@ import org.koin.compose.viewmodel.koinViewModel
 object HomeTestTags {
     const val SEARCH_FIELD = "home_search"
     const val EMPTY_STATE = "home_empty_state"
-    const val CREATE_GROUP_BUTTON = "home_create_group"
+    const val ADD_EXPENSE_BUTTON = "home_add_expense"
 }
 
 /**
  * Stateful entry point for the Home tab.
  *
- * @param onCreateGroup "+" button tapped.
+ * @param onAddExpense "+" button tapped.
  * @param onGroupClick a group card tapped (only possible once groups exist).
  */
 @Composable
 fun HomeScreen(
-    onCreateGroup: () -> Unit,
+    onAddExpense: () -> Unit,
     onGroupClick: (groupId: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel(),
@@ -101,7 +101,7 @@ fun HomeScreen(
         uiState = uiState,
         searchQuery = searchQuery,
         onSearchQueryChange = viewModel::onSearchQueryChange,
-        onCreateGroup = onCreateGroup,
+        onAddExpense = onAddExpense,
         onGroupClick = onGroupClick,
         modifier = modifier,
     )
@@ -113,7 +113,7 @@ fun HomeContent(
     uiState: HomeUiState,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    onCreateGroup: () -> Unit,
+    onAddExpense: () -> Unit,
     onGroupClick: (groupId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -179,8 +179,8 @@ fun HomeContent(
             }
         }
 
-        CreateGroupButton(
-            onClick = onCreateGroup,
+        AddExpenseButton(
+            onClick = onAddExpense,
             modifier = Modifier.align(Alignment.BottomEnd).padding(spacing.screenHorizontal),
         )
     }
@@ -305,18 +305,18 @@ private fun RecentGroupsHeader(count: Int, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun CreateGroupButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun AddExpenseButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     FloatingActionButton(
         onClick = onClick,
         shape = CircleShape,
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
         elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
-        modifier = modifier.size(56.dp).testTag(HomeTestTags.CREATE_GROUP_BUTTON),
+        modifier = modifier.size(56.dp).testTag(HomeTestTags.ADD_EXPENSE_BUTTON),
     ) {
         Icon(
             painter = painterResource(DsRes.drawable.ic_plus),
-            contentDescription = stringResource(Res.string.home_create_group),
+            contentDescription = stringResource(Res.string.home_add_expense),
             modifier = Modifier.size(28.dp),
         )
     }
@@ -337,7 +337,7 @@ private fun HomeEmptyPreview() {
             uiState = HomeUiState(isLoading = false, userName = "Ahmad"),
             searchQuery = "",
             onSearchQueryChange = {},
-            onCreateGroup = {},
+            onAddExpense = {},
             onGroupClick = {},
         )
     }
@@ -361,7 +361,7 @@ private fun HomeEmptyDarkPreview() {
             uiState = HomeUiState(isLoading = false, userName = "Ahmad"),
             searchQuery = "",
             onSearchQueryChange = {},
-            onCreateGroup = {},
+            onAddExpense = {},
             onGroupClick = {},
         )
     }
@@ -387,7 +387,7 @@ private fun HomeWithGroupsSample(darkTheme: Boolean) {
             ),
             searchQuery = "",
             onSearchQueryChange = {},
-            onCreateGroup = {},
+            onAddExpense = {},
             onGroupClick = {},
         )
     }

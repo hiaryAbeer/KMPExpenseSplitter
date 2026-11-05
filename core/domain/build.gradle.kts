@@ -13,6 +13,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(libs.kotlinx.coroutines.core)
+            // LocalDate for expense dates (pure Kotlin, no platform APIs).
+            api(libs.kotlinx.datetime)
         }
     }
 }

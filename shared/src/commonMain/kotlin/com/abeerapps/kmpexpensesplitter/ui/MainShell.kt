@@ -38,7 +38,7 @@ private enum class MainTab { Home, Groups, Settings }
  */
 @Composable
 internal fun MainShell(
-    onCreateGroup: () -> Unit,
+    onAddExpense: () -> Unit,
     onGroupClick: (groupId: String) -> Unit,
     onDataCleared: () -> Unit,
 ) {
@@ -59,7 +59,7 @@ internal fun MainShell(
     ) { innerPadding ->
         Box(Modifier.fillMaxSize().padding(innerPadding)) {
             when (MainTab.entries[selected]) {
-                MainTab.Home -> HomeScreen(onCreateGroup = onCreateGroup, onGroupClick = onGroupClick)
+                MainTab.Home -> HomeScreen(onAddExpense = onAddExpense, onGroupClick = onGroupClick)
                 MainTab.Groups -> PlaceholderScreen(title = "Groups")
                 MainTab.Settings -> SettingsScreen(onDataCleared = onDataCleared)
             }

@@ -46,15 +46,17 @@ internal class DataStoreAppPreferencesRepository(
 
 /**
  * Wipes everything stored locally: the Preferences DataStore (profile + app
- * preferences) and the groups. Add new stores here as they are introduced.
+ * preferences), the groups and the expenses. Add new stores here as they are introduced.
  */
 internal class DeviceLocalDataCleaner(
     private val dataStore: DataStore<Preferences>,
     private val groups: InMemoryGroupRepository,
+    private val expenses: InMemoryExpenseRepository,
 ) : LocalDataCleaner {
     override suspend fun clearAll() {
         dataStore.edit { it.clear() }
         groups.clear()
+        expenses.clear()
     }
 }
 
