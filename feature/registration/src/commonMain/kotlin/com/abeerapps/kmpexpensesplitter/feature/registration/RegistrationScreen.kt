@@ -141,7 +141,7 @@ fun RegistrationContent(
                 Modifier
                     .fillMaxWidth()
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-                    .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 40.dp),
+                    .padding(horizontal = ExpenseSplitterTheme.spacing.screenHorizontal, vertical = ExpenseSplitterTheme.spacing.md),
             ) {
                 PrimaryButton(
                     text = stringResource(Res.string.registration_save),
@@ -168,7 +168,7 @@ private fun Header() {
             .fillMaxWidth()
             .background(Brush.verticalGradient(listOf(gradientTop, background)))
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
-            .padding(start = 24.dp, end = 24.dp, top = 48.dp, bottom = 24.dp),
+            .padding(horizontal = ExpenseSplitterTheme.spacing.screenHorizontal, vertical = ExpenseSplitterTheme.spacing.md),
     ) {
         Box(
             modifier = Modifier
@@ -184,7 +184,7 @@ private fun Header() {
                 modifier = Modifier.size(32.dp),
             )
         }
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(ExpenseSplitterTheme.spacing.md))
         Text(
             text = stringResource(Res.string.registration_title),
             style = MaterialTheme.typography.headlineSmall,
@@ -212,7 +212,8 @@ private fun Form(
         modifier = Modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-            .padding(start = 24.dp, end = 24.dp, top = 24.dp),
+            // No top padding: the header's 16dp bottom padding already separates them.
+            .padding(horizontal = ExpenseSplitterTheme.spacing.screenHorizontal),
     ) {
         FieldLabel(stringResource(Res.string.registration_name_label))
         Spacer(Modifier.height(8.dp))
@@ -230,7 +231,7 @@ private fun Form(
             modifier = Modifier.testTag(RegistrationTestTags.NAME_FIELD),
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(ExpenseSplitterTheme.spacing.md))
         FieldLabel(stringResource(Res.string.registration_currency_label))
         Spacer(Modifier.height(8.dp))
         CurrencyField(

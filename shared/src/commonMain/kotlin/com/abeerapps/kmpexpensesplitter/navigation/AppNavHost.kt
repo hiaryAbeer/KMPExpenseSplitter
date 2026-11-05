@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.abeerapps.kmpexpensesplitter.feature.onboarding.OnboardingScreen
 import com.abeerapps.kmpexpensesplitter.feature.registration.RegistrationScreen
+import com.abeerapps.kmpexpensesplitter.ui.MainShell
 import com.abeerapps.kmpexpensesplitter.ui.PlaceholderScreen
 
 /**
@@ -49,7 +50,16 @@ fun AppNavHost(
             )
         }
         composable<AppDestination.Home> {
-            PlaceholderScreen(title = "Home")
+            MainShell(
+                onCreateGroup = { navController.navigate(AppDestination.CreateGroup) },
+                onGroupClick = { id -> navController.navigate(AppDestination.GroupDetails(id)) },
+            )
+        }
+        composable<AppDestination.CreateGroup> {
+            PlaceholderScreen(title = "Create group", onBack = navController::navigateUp)
+        }
+        composable<AppDestination.GroupDetails> {
+            PlaceholderScreen(title = "Group details", onBack = navController::navigateUp)
         }
     }
 }

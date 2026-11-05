@@ -85,7 +85,7 @@ fun OnboardingContent(
             modifier = Modifier
                 .fillMaxSize()
                 .safeDrawingPadding()
-                .padding(horizontal = spacing.lg, vertical = spacing.md),
+                .padding(horizontal = spacing.screenHorizontal, vertical = spacing.md),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Scrollable so large font scales / small screens never clip the copy.
@@ -102,7 +102,7 @@ fun OnboardingContent(
                     contentDescription = null, // Decorative; the title carries the meaning.
                     modifier = Modifier.size(220.dp),
                 )
-                Spacer(Modifier.height(spacing.xl))
+                Spacer(Modifier.height(spacing.md))
                 Text(
                     text = stringResource(Res.string.onboarding_title),
                     style = MaterialTheme.typography.headlineMedium,

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- %1$s = user's name -->
+    <string name="home_greeting">Hello, %1$s</string>
+    <string name="home_you_are_owed">You are owed</string>
+    <string name="home_you_owe">You owe</string>
+    <string name="home_search_placeholder">Search groups...</string>
+    <string name="home_recent_groups">Recent Groups</string>
+    <plurals name="home_group_count">
+        <item quantity="one">%1$d group</item>
+        <item quantity="other">%1$d groups</item>
+    </plurals>
+    <string name="home_empty_title">No groups yet</string>
+    <string name="home_empty_message">Create a group to start tracking shared expenses.</string>
+    <string name="home_no_results_title">No groups found</string>
+    <!-- %1$s = search text -->
+    <string name="home_no_results_message">No group matches \"%1$s\".</string>
+    <string name="home_create_group">Create group</string>
+    <!-- %1$s = group name, %2$s = your balance, %3$s = total spent -->
+    <string name="home_group_card_description">%1$s. Your balance %2$s. Total %3$s</string>
+</resources>

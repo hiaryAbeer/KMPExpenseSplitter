@@ -1,6 +1,8 @@
 package com.abeerapps.kmpexpensesplitter.core.data.di
 
 import com.abeerapps.kmpexpensesplitter.core.data.repository.DataStoreUserProfileRepository
+import com.abeerapps.kmpexpensesplitter.core.data.repository.InMemoryGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.GroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -15,4 +17,5 @@ internal expect val platformDataModule: Module
 val dataModule: Module = module {
     includes(platformDataModule)
     single<UserProfileRepository> { DataStoreUserProfileRepository(dataStore = get()) }
+    single<GroupRepository> { InMemoryGroupRepository() }
 }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- From Figma home/icon.svg. Tinted at runtime. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp" android:height="20dp"
+    android:viewportWidth="20" android:viewportHeight="20">
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.66574"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M15.8245 9.16158C15.8245 12.8414 12.8414 15.8245 9.16158 15.8245C5.48172 15.8245 2.49861 12.8414 2.49861 9.16158C2.49861 5.48172 5.48172 2.49861 9.16158 2.49861C12.8414 2.49861 15.8245 5.48172 15.8245 9.16158Z" />
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.66574"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M17.4903 17.4903L13.9089 13.9089" />
+</vector>

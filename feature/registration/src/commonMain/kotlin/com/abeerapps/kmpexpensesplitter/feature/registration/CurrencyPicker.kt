@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.AppTextField
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.FieldContainer
+import com.abeerapps.kmpexpensesplitter.core.designsystem.theme.ExpenseSplitterTheme
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Currency
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
 import com.abeerapps.kmpexpensesplitter.feature.registration.resources.Res
@@ -133,7 +134,7 @@ internal fun CurrencyPickerSheet(
                 text = stringResource(Res.string.registration_currency_sheet_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 24.dp).semantics { heading() },
+                modifier = Modifier.padding(horizontal = ExpenseSplitterTheme.spacing.screenHorizontal).semantics { heading() },
             )
             Spacer(Modifier.height(16.dp))
             AppTextField(
@@ -143,13 +144,13 @@ internal fun CurrencyPickerSheet(
                 leadingIcon = painterResource(Res.drawable.ic_search),
                 keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-                modifier = Modifier.padding(horizontal = 24.dp).testTag(RegistrationTestTags.CURRENCY_SEARCH),
+                modifier = Modifier.padding(horizontal = ExpenseSplitterTheme.spacing.screenHorizontal).testTag(RegistrationTestTags.CURRENCY_SEARCH),
             )
             Spacer(Modifier.height(8.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             if (results.isEmpty()) {
-                Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxWidth().padding(ExpenseSplitterTheme.spacing.md), contentAlignment = Alignment.Center) {
                     Text(
                         text = stringResource(Res.string.registration_currency_no_results, query.trim()),
                         style = MaterialTheme.typography.bodyMedium,
@@ -194,7 +195,7 @@ private fun CurrencyRow(
         modifier = Modifier
             .fillMaxWidth()
             .selectable(selected = isSelected, role = Role.RadioButton, onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 12.dp),
+            .padding(horizontal = ExpenseSplitterTheme.spacing.screenHorizontal, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(

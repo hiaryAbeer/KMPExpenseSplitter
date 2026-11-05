@@ -11,15 +11,21 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/** Spacing scale (4dp grid). Use these instead of literal dp values in screens. */
+/**
+ * Spacing scale. Use these instead of literal dp values in screens.
+ *
+ * App-wide rules:
+ * - Space between views never exceeds [md] (16dp), so the scale stops there.
+ * - Every screen uses [screenHorizontal] (16dp) as its left/right margin.
+ */
 @Immutable
 data class Spacing(
     val xs: Dp = 4.dp,
     val sm: Dp = 8.dp,
+    val smd: Dp = 12.dp,
     val md: Dp = 16.dp,
-    val lg: Dp = 24.dp,
-    val xl: Dp = 32.dp,
-    val xxl: Dp = 48.dp,
+    /** Left/right margin of every screen and sheet. */
+    val screenHorizontal: Dp = 16.dp,
 )
 
 /** Border widths. The design uses a 0.73dp hairline for inputs and cards. */

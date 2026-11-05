@@ -25,7 +25,7 @@ internal fun PlaceholderScreen(title: String, onBack: (() -> Unit)? = null) {
             modifier = Modifier
                 .fillMaxSize()
                 .safeDrawingPadding()
-                .padding(ExpenseSplitterTheme.spacing.lg),
+                .padding(horizontal = ExpenseSplitterTheme.spacing.screenHorizontal, vertical = ExpenseSplitterTheme.spacing.md),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark-theme variant of drawable/onboarding_illustration.xml (picked automatically in dark mode). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Backdrop -->
+    <path
+        android:fillColor="#134E4A"
+        android:pathData="M100,100m-96,0a96,96 0,1 1,192 0a96,96 0,1 1,-192 0" />
+
+    <!-- Receipt shadow -->
+    <path
+        android:fillColor="#000000"
+        android:fillAlpha="0.25"
+        android:pathData="M66,50a4,4 0,0 1,4 -4h72a4,4 0,0 1,4 4v112l-10,8 -10,-8 -10,8 -10,-8 -10,8 -10,-8 -10,8 -10,-8z" />
+
+    <!-- Receipt -->
+    <path
+        android:fillColor="#F9FAFB"
+        android:pathData="M60,44a4,4 0,0 1,4 -4h72a4,4 0,0 1,4 4v112l-10,8 -10,-8 -10,8 -10,-8 -10,8 -10,-8 -10,8 -10,-8z" />
+
+    <!-- Receipt line items -->
+    <path android:fillColor="#9CA3AF" android:pathData="M74,60h52v6h-52z" />
+    <path android:fillColor="#9CA3AF" android:pathData="M74,78h36v6h-36z" />
+    <path android:fillColor="#9CA3AF" android:pathData="M74,96h44v6h-44z" />
+
+    <!-- Dashed split line -->
+    <path android:fillColor="#0D9488" android:pathData="M74,114h8v3h-8zM88,114h8v3h-8zM102,114h8v3h-8zM116,114h10v3h-10z" />
+
+    <!-- Total -->
+    <path android:fillColor="#0D9488" android:pathData="M74,126h26v8h-26z" />
+    <path android:fillColor="#0D9488" android:pathData="M108,126h18v8h-18z" />
+
+    <!-- Coral coin (right) -->
+    <path
+        android:fillColor="#A9380F"
+        android:pathData="M154,142m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0" />
+    <path
+        android:fillColor="#FFB59E"
+        android:pathData="M154,142m-15,0a15,15 0,1 1,30 0a15,15 0,1 1,-30 0" />
+
+    <!-- Teal coin (left) -->
+    <path
+        android:fillColor="#005048"
+        android:pathData="M42,126m-18,0a18,18 0,1 1,36 0a18,18 0,1 1,-36 0" />
+    <path
+        android:fillColor="#6FD8C8"
+        android:pathData="M42,126m-11,0a11,11 0,1 1,22 0a11,11 0,1 1,-22 0" />
+</vector>

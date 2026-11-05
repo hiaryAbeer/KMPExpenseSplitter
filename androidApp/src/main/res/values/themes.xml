@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window background matches the Compose background, so there is no flash
+         of the wrong colour before the first frame. Dark variant in values-night. -->
+    <style name="Theme.ExpenseSplitter" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/app_background</item>
+    </style>
+    <color name="app_background">#F8F9FA</color>
+</resources>

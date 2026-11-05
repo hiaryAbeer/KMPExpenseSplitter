@@ -34,6 +34,7 @@ kotlin {
             implementation(project(":core:designsystem"))
             implementation(project(":feature:onboarding"))
             implementation(project(":feature:registration"))
+            implementation(project(":feature:home"))
 
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.viewmodelCompose)

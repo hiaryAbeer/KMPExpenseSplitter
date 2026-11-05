@@ -18,3 +18,9 @@ kotlin {
         }
     }
 }
+
+compose.resources {
+    // Shared icons (search, plus, nav icons) are used by several features.
+    publicResClass = true
+    packageOfResClass = "com.abeerapps.kmpexpensesplitter.core.designsystem.resources"
+}

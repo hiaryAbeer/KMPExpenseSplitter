@@ -41,3 +41,4 @@ include(":core:designsystem") // Theme + reusable Compose components
 // Features
 include(":feature:onboarding")
 include(":feature:registration")
+include(":feature:home")

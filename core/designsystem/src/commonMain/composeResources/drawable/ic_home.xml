@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- From Figma home/icon-7.svg. Tinted at runtime. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.99927"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M14.9945 20.9923V12.9952C14.9945 12.7301 14.8892 12.4759 14.7017 12.2884C14.5142 12.1009 14.26 11.9956 13.9949 11.9956H9.99633C9.73121 11.9956 9.47695 12.1009 9.28949 12.2884C9.10202 12.4759 8.9967 12.7301 8.9967 12.9952V20.9923" />
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.99927"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M2.9989 9.99633C2.99883 9.70551 3.06221 9.41817 3.18462 9.15436C3.30703 8.89055 3.48552 8.65662 3.70764 8.46889L10.7051 2.47209C11.0659 2.16711 11.5231 1.99979 11.9956 1.99979C12.4681 1.99979 12.9253 2.16711 13.2861 2.47209L20.2836 8.46889C20.5057 8.65662 20.6842 8.89055 20.8066 9.15436C20.929 9.41817 20.9924 9.70551 20.9923 9.99633V18.993C20.9923 19.5233 20.7817 20.0318 20.4067 20.4067C20.0318 20.7817 19.5233 20.9923 18.993 20.9923H4.99817C4.46793 20.9923 3.95941 20.7817 3.58447 20.4067C3.20954 20.0318 2.9989 19.5233 2.9989 18.993V9.99633Z" />
+</vector>

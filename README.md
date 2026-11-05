@@ -24,8 +24,8 @@ androidApp (Android entry)      iosApp (Swift entry, Xcode)
 |---|---|---|
 | `:core:domain` | `UserProfile`, `CurrencyCode`, `SupportedCurrencies`, `UserProfileRepository` (interface), use cases, `FeatureFlags` | coroutines only |
 | `:core:data` | Repository implementations, persistence, platform file paths (`expect/actual`), Koin `dataModule` | domain |
-| `:core:designsystem` | Theme from the Figma tokens (colors, type, 16dp shapes, spacing), buttons, form fields (`AppTextField`, `FieldContainer`), `ObserveAsEvents` | Compose |
-| `:feature:*` | One user-facing feature: screen + ViewModel + Koin module | domain, designsystem (**never** data or other features) |
+| `:core:designsystem` | Theme from the Figma tokens (colors, type, 16dp shapes, spacing), shared icons, components (`PrimaryButton`, `AppTextField`, `AppCard`, `EmptyState`, `AppNavigationBar`), `ObserveAsEvents` | Compose |
+| `:feature:*` | One user-facing feature: screen + ViewModel + Koin module (`onboarding`, `registration`, `home`) | domain, designsystem (**never** data or other features) |
 | `:shared` | Wires everything: `initKoin`, `AppNavHost`, `AppViewModel` (start destination), `Shared.framework` | everything |
 
 **Presentation pattern (UDF/MVI-lite)**: each screen has `UiState` (`StateFlow`), `Action`s from the UI,
@@ -56,6 +56,21 @@ of Gradle. Versions live in `gradle/libs.versions.toml`.
      Half-filled input survives process death (`SavedStateHandle`).
    - **Skip** → Home. It is hidden for now via `StaticFeatureFlags.isOnboardingSkipEnabled = false`
      (`shared/.../config/AppConfig.kt`). The ViewModel also ignores Skip while the flag is off.
+
+## Home
+
+After registration the app opens the main shell: bottom navigation with **Home**, **Groups** and
+**Settings** (Groups/Settings are placeholders). Home shows the greeting with the registered name,
+"You are owed" / "You owe" totals in the default currency, group search, and **Recent Groups**.
+
+Groups are not persisted yet: `InMemoryGroupRepository` (in `:core:data`) starts empty, so Home
+shows the generic `EmptyState` ("No groups yet", no button: the "+" button already creates groups).
+When group storage is built, replace that one binding in `dataModule`; the group cards from the
+design are already implemented (see the `HomeWithGroupsPreview` preview).
+
+Money is stored as integer hundredths (`Money.minorUnits`) and always shown with two decimals,
+as in the design. Totals only include groups in the user's default currency until currency
+conversion exists.
 
 ## Build variants
 
@@ -104,6 +119,9 @@ Tests are written once in `commonTest` and run on the JVM and the iOS simulator
 | `SupportedCurrenciesTest` | catalog integrity, JOD default |
 | `SearchCurrenciesUseCaseTest` | name/code search, countries & symbols excluded, ranking, accents |
 | `RegistrationViewModelTest` | form state, currency menu, save success/failure, state restoration |
+| `CalculateBalanceSummaryUseCaseTest` | owed/owe totals, currency isolation |
+| `HomeViewModelTest` | greeting, zero balances, empty state, group search |
+| `MoneyFormatTest` | `97.75 JOD` / `+85.25 JOD` / `-45.00 JOD` formatting |
 | `AppViewModelTest` | start destination, resolved once |
 | `KoinGraphTest` | complete DI graph |
 
@@ -139,6 +157,14 @@ python3 -m venv /tmp/venv && /tmp/venv/bin/pip install babel==2.17.0
 
 ## Design notes
 
+- **Dark theme** follows the system setting. Dark colors come from the Figma dark Home design:
+  background `#111827`, cards/bottom bar `#1F2937`, borders `#374151`, text `#F9FAFB`/`#9CA3AF`,
+  primary `#14B8A6`, positive `#34D399`, negative `#F87171`. Icons are tinted from the theme at
+  runtime (their SVG colors are placeholders), so they switch automatically. Multi-color art uses a
+  `drawable-dark/` variant (see the onboarding illustration).
+- **Spacing rule:** every screen uses a 16dp left/right margin (`spacing.screenHorizontal`) and the
+  space between views never exceeds 16dp (`spacing.md`, the largest step in the scale). This
+  overrides the larger gaps in the Figma exports.
 - Values come from the Figma file "Expense splliter" (page "onbording") and live in `:core:designsystem/theme`.
 - The design uses **Inter**; the app currently uses the platform font (Roboto / SF Pro). To match exactly,
   add the Inter `.ttf` files to `core/designsystem/src/commonMain/composeResources/font/` and set

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- From Figma home/icon-2.svg (group). Tinted at runtime. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.99927"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M15.9941 20.9923V18.993C15.9941 17.9326 15.5729 16.9155 14.823 16.1656C14.0731 15.4158 13.0561 14.9945 11.9956 14.9945H5.9978C4.93732 14.9945 3.92028 15.4158 3.17041 16.1656C2.42054 16.9155 1.99927 17.9326 1.99927 18.993V20.9923" />
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.99927"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M12.9952 6.99743C12.9952 9.20576 11.205 10.996 8.9967 10.996C6.78837 10.996 4.99817 9.20576 4.99817 6.99743C4.99817 4.78911 6.78837 2.9989 8.9967 2.9989C11.205 2.9989 12.9952 4.78911 12.9952 6.99743Z" />
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.99927"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M21.9919 20.9923V18.993C21.9913 18.1071 21.6964 17.2464 21.1536 16.5462C20.6108 15.846 19.8508 15.3459 18.993 15.1245" />
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.99927"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M15.9941 3.12885C16.8542 3.34907 17.6166 3.84929 18.161 4.55064C18.7054 5.25199 19.0009 6.11459 19.0009 7.00243C19.0009 7.89028 18.7054 8.75287 18.161 9.45422C17.6166 10.1556 16.8542 10.6558 15.9941 10.876" />
+</vector>

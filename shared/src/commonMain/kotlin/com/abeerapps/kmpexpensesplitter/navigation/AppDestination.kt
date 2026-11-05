@@ -9,11 +9,19 @@ sealed interface AppDestination {
     @Serializable
     data object Onboarding : AppDestination
 
-    /** Name + default currency form. Placeholder until the feature lands. */
+    /** "Set up your profile": name + default currency. */
     @Serializable
     data object Registration : AppDestination
 
-    /** Main app (groups & expenses). Placeholder until the feature lands. */
+    /** Main app: bottom-navigation shell (Home, Groups, Settings). */
     @Serializable
     data object Home : AppDestination
+
+    /** Placeholder until group creation is built. */
+    @Serializable
+    data object CreateGroup : AppDestination
+
+    /** Placeholder until group details are built. */
+    @Serializable
+    data class GroupDetails(val groupId: String) : AppDestination
 }

@@ -8,6 +8,7 @@ import com.abeerapps.kmpexpensesplitter.config.StaticFeatureFlags
 import com.abeerapps.kmpexpensesplitter.core.data.di.dataModule
 import com.abeerapps.kmpexpensesplitter.core.domain.config.FeatureFlags
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveOnboardingStatusUseCase
+import com.abeerapps.kmpexpensesplitter.feature.home.di.homeModule
 import com.abeerapps.kmpexpensesplitter.feature.onboarding.di.onboardingModule
 import com.abeerapps.kmpexpensesplitter.feature.registration.di.registrationModule
 import org.koin.core.context.startKoin
@@ -31,6 +32,7 @@ internal fun allModules(config: AppConfig): List<Module> = listOf(
     dataModule,
     onboardingModule,
     registrationModule,
+    homeModule,
 )
 
 /**
