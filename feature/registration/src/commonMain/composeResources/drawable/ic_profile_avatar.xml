@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- From Figma assets/icons/icon.svg (32x32 user outline). Tinted at runtime. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp" android:height="32dp"
+    android:viewportWidth="32" android:viewportHeight="32">
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2.66633"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M25.3301,27.9964V25.3301C25.3301,23.9158 24.7683,22.5594 23.7682,21.5593C22.7681,20.5593 21.4118,19.9974 19.9975,19.9974H11.9985C10.5842,19.9974 9.2278,20.5593 8.22773,21.5593C7.22766,22.5594 6.66583,23.9158 6.66583,25.3301V27.9964" />
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="2.66633"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M21.3306,9.33214C21.3306,12.2773 18.9431,14.6648 15.9979,14.6648C13.0528,14.6648 10.6653,12.2773 10.6653,9.33214C10.6653,6.387 13.0528,3.99949 15.9979,3.99949C18.9431,3.99949 21.3306,6.387 21.3306,9.33214Z" />
+</vector>

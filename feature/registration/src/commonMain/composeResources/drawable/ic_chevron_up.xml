@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- From Figma assets/icons/icon-3.svg (16x16 chevron). Rotated 180° when collapsed. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp" android:height="16dp"
+    android:viewportWidth="16" android:viewportHeight="16">
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.33316"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M11.9985,9.99869L7.999,5.99922L3.99952,9.99869" />
+</vector>

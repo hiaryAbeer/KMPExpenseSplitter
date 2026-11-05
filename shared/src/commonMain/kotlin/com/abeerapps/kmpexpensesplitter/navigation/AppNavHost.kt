@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.abeerapps.kmpexpensesplitter.feature.onboarding.OnboardingScreen
+import com.abeerapps.kmpexpensesplitter.feature.registration.RegistrationScreen
 import com.abeerapps.kmpexpensesplitter.ui.PlaceholderScreen
 
 /**
@@ -38,7 +39,14 @@ fun AppNavHost(
             )
         }
         composable<AppDestination.Registration> {
-            PlaceholderScreen(title = "Registration", onBack = navController::navigateUp)
+            RegistrationScreen(
+                onRegistered = {
+                    // Clear onboarding + registration: back from Home exits the app.
+                    navController.navigate(AppDestination.Home) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
+                },
+            )
         }
         composable<AppDestination.Home> {
             PlaceholderScreen(title = "Home")

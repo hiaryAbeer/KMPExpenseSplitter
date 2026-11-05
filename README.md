@@ -22,9 +22,9 @@ androidApp (Android entry)      iosApp (Swift entry, Xcode)
 
 | Module | Responsibility | May depend on |
 |---|---|---|
-| `:core:domain` | `UserProfile`, `CurrencyCode`, `UserProfileRepository` (interface), use cases, `FeatureFlags` | coroutines only |
+| `:core:domain` | `UserProfile`, `CurrencyCode`, `SupportedCurrencies`, `UserProfileRepository` (interface), use cases, `FeatureFlags` | coroutines only |
 | `:core:data` | Repository implementations, persistence, platform file paths (`expect/actual`), Koin `dataModule` | domain |
-| `:core:designsystem` | Theme (colors, spacing), shared components, `ObserveAsEvents` | Compose |
+| `:core:designsystem` | Theme from the Figma tokens (colors, type, 16dp shapes, spacing), buttons, form fields (`AppTextField`, `FieldContainer`), `ObserveAsEvents` | Compose |
 | `:feature:*` | One user-facing feature: screen + ViewModel + Koin module | domain, designsystem (**never** data or other features) |
 | `:shared` | Wires everything: `initKoin`, `AppNavHost`, `AppViewModel` (start destination), `Shared.framework` | everything |
 
@@ -47,7 +47,13 @@ of Gradle. Versions live in `gradle/libs.versions.toml`.
 1. On launch, `AppViewModel` runs `ObserveOnboardingStatusUseCase` once.
 2. No stored profile (name + default currency), or invalid data → **Onboarding**; otherwise → **Home**.
 3. Onboarding has two actions:
-   - **Register** → Registration (placeholder, next feature).
+   - **Register** → **Set up your profile** (`:feature:registration`): name + default currency.
+     The currency field opens a bottom sheet listing every currency in use worldwide (154),
+     with **Jordanian Dinar (JOD) preselected**. Search matches the currency **name or ISO code**
+     ("dinar", "jod"); symbols and country names are not searched. Accent-insensitive.
+     **Save & Continue** is enabled once the name is valid (1–50 chars after trimming).
+     It saves the profile and opens Home, clearing onboarding from the back stack.
+     Half-filled input survives process death (`SavedStateHandle`).
    - **Skip** → Home. It is hidden for now via `StaticFeatureFlags.isOnboardingSkipEnabled = false`
      (`shared/.../config/AppConfig.kt`). The ViewModel also ignores Skip while the flag is off.
 
@@ -94,6 +100,10 @@ Tests are written once in `commonTest` and run on the JVM and the iOS simulator
 | `ObserveOnboardingStatusUseCaseTest` | onboarding rule, de-duplication |
 | `DataStoreUserProfileRepositoryTest` | persistence, invalid/corrupt data fallback |
 | `OnboardingViewModelTest` | Skip flag, navigation events, event buffering |
+| `RegisterUserUseCaseTest` | name rules, trimming, storage failure |
+| `SupportedCurrenciesTest` | catalog integrity, JOD default |
+| `SearchCurrenciesUseCaseTest` | name/code search, countries & symbols excluded, ranking, accents |
+| `RegistrationViewModelTest` | form state, currency menu, save success/failure, state restoration |
 | `AppViewModelTest` | start destination, resolved once |
 | `KoinGraphTest` | complete DI graph |
 
@@ -106,6 +116,35 @@ Tests are written once in `commonTest` and run on the JVM and the iOS simulator
 - Native SwiftUI screens can be added next to the Compose UI when a flow needs platform-specific UX.
 - For distribution as a package (SPM/CocoaPods) to another iOS app, add an XCFramework task or the
   `cocoapods` plugin to `:shared`. The direct framework integration is enough for this app.
+
+## Currency data
+
+`core/domain/.../model/CurrencyData.kt` is **generated** from Unicode CLDR: every currency that is
+legal tender today, with English names, symbols (the issuing country's local symbol when English
+has none, e.g. `د.أ.` for JOD) and the countries using it.
+
+Product decisions applied on top of CLDR (constants at the top of the script, enforced by
+`SupportedCurrenciesTest`):
+
+- Israel is not listed; the shekel (ILS) is shown as **New Shekel** under **Palestine**.
+- Palestine is always named "Palestine".
+- Jordanian Dinar is listed under Jordan only.
+
+To refresh it after a CLDR update:
+
+```bash
+python3 -m venv /tmp/venv && /tmp/venv/bin/pip install babel==2.17.0
+/tmp/venv/bin/python scripts/generate_currencies.py
+```
+
+## Design notes
+
+- Values come from the Figma file "Expense splliter" (page "onbording") and live in `:core:designsystem/theme`.
+- The design uses **Inter**; the app currently uses the platform font (Roboto / SF Pro). To match exactly,
+  add the Inter `.ttf` files to `core/designsystem/src/commonMain/composeResources/font/` and set
+  `fontFamily` in `Type.kt`.
+- Compose resources in library modules need `androidResources { enable = true }` on Android;
+  the `expensesplitter.kmp.compose` convention plugin turns this on for every UI module.
 
 ## Adding a feature
 

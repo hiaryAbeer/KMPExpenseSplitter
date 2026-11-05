@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- From Figma assets/icons/icon-4.svg (16x16 dollar sign). Tinted at runtime. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp" android:height="16dp"
+    android:viewportWidth="16" android:viewportHeight="16">
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.33316"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M7.99896,1.33316V14.6647" />
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.33316"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M11.3318,3.33289H6.33248C5.71372,3.33289 5.12031,3.57869 4.68278,4.01621C4.24525,4.45374 3.99945,5.04716 3.99945,5.66591C3.99945,6.28467 4.24525,6.87808 4.68278,7.31561C5.12031,7.75314 5.71372,7.99894 6.33248,7.99894H9.66537C10.2841,7.99894 10.8775,8.24474 11.3151,8.68227C11.7526,9.1198 11.9984,9.71321 11.9984,10.332C11.9984,10.9507 11.7526,11.5441 11.3151,11.9817C10.8775,12.4192 10.2841,12.665 9.66537,12.665H3.99945" />
+</vector>

@@ -12,4 +12,12 @@ package com.abeerapps.kmpexpensesplitter.core.domain.model
 data class UserProfile(
     val name: String,
     val defaultCurrency: CurrencyCode,
-)
+) {
+    companion object {
+        /** Longest accepted display name, in characters (after trimming). */
+        const val MAX_NAME_LENGTH = 50
+
+        /** A name is valid when, once trimmed, it has 1..[MAX_NAME_LENGTH] characters. */
+        fun isValidName(raw: String): Boolean = raw.trim().length in 1..MAX_NAME_LENGTH
+    }
+}

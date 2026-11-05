@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="registration_title">Set up your profile</string>
+    <string name="registration_subtitle">Tell us a bit about yourself to get started.</string>
+    <string name="registration_name_label">Your name</string>
+    <string name="registration_name_placeholder">e.g. Alex</string>
+    <string name="registration_currency_label">Default currency</string>
+    <!-- %1$s = ISO code (USD), %2$s = currency name (US Dollar) -->
+    <string name="registration_currency_value">%1$s — %2$s</string>
+    <string name="registration_currency_sheet_title">Select currency</string>
+    <string name="registration_currency_search_placeholder">Search by name or code</string>
+    <!-- %1$s = what the user typed -->
+    <string name="registration_currency_no_results">No currencies match \"%1$s\"</string>
+    <string name="registration_save">Save &amp; Continue</string>
+    <string name="registration_error_save_failed">Couldn\'t save your profile. Please try again.</string>
+</resources>

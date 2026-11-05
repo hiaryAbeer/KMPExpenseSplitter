@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget
 import com.abeerapps.kmpexpensesplitter.buildlogic.libs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -18,6 +19,13 @@ class KmpComposeConventionPlugin : Plugin<Project> {
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
 
         extensions.configure<KotlinMultiplatformExtension> {
+            // Required for Compose resources (strings, drawables) of library modules
+            // to be packaged into the APK. Without it they compile but the app
+            // crashes at runtime with MissingResourceException.
+            extensions.configure<KotlinMultiplatformAndroidLibraryTarget> {
+                androidResources { enable = true }
+            }
+
             sourceSets.getByName("commonMain").dependencies {
                 implementation(libs.findLibrary("compose-runtime").get())
                 implementation(libs.findLibrary("compose-foundation").get())
