@@ -53,6 +53,12 @@ fun AppNavHost(
             MainShell(
                 onCreateGroup = { navController.navigate(AppDestination.CreateGroup) },
                 onGroupClick = { id -> navController.navigate(AppDestination.GroupDetails(id)) },
+                onDataCleared = {
+                    // Fresh start: nothing to go back to.
+                    navController.navigate(AppDestination.Onboarding) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
+                },
             )
         }
         composable<AppDestination.CreateGroup> {

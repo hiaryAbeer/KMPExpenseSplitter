@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- From Figma dark settings/icon-4.svg. Tinted at runtime. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp" android:height="20dp"
+    android:viewportWidth="20" android:viewportHeight="20">
+    <path android:strokeColor="#FF000000" android:strokeWidth="1.66574"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M9.99438,2.49854C9.00037,3.49254 8.44194,4.84071 8.44194,6.24645C8.44194,7.6522 9.00037,9.00036 9.99438,9.99437C10.9884,10.9884 12.3366,11.5468 13.7423,11.5468C15.148,11.5468 16.4962,10.9884 17.4902,9.99437C17.4902,11.4769 17.0506,12.9262 16.2269,14.1588C15.4033,15.3915 14.2326,16.3523 12.8629,16.9196C11.4932,17.487 9.98606,17.6354 8.53201,17.3462C7.07796,17.057 5.74233,16.343 4.69402,15.2947C3.64571,14.2464 2.9318,12.9108 2.64257,11.4567C2.35334,10.0027 2.50178,8.49553 3.06913,7.12584C3.63647,5.75615 4.59723,4.58546 5.82991,3.76181C7.0626,2.93816 8.51184,2.49854 9.99438,2.49854Z" />
+</vector>

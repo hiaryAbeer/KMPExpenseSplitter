@@ -15,7 +15,8 @@ struct iOSApp: App {
         #else
         let isDebug = false
         #endif
-        MainViewControllerKt.startKoin(isDebug: isDebug)
+        let versionName = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        MainViewControllerKt.startKoin(isDebug: isDebug, versionName: versionName)
     }
 
     var body: some Scene {

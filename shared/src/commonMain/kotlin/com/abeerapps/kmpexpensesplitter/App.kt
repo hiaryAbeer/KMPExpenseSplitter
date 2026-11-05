@@ -1,6 +1,7 @@
 package com.abeerapps.kmpexpensesplitter
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -9,7 +10,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abeerapps.kmpexpensesplitter.core.designsystem.theme.ExpenseSplitterTheme
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ThemePreference
 import com.abeerapps.kmpexpensesplitter.navigation.AppNavHost
+import com.abeerapps.kmpexpensesplitter.ui.SystemBarsAppearance
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -20,7 +23,15 @@ import org.koin.compose.viewmodel.koinViewModel
  */
 @Composable
 fun App(viewModel: AppViewModel = koinViewModel()) {
-    ExpenseSplitterTheme {
+    val themePreference by viewModel.themePreference.collectAsStateWithLifecycle()
+    val darkTheme = when (themePreference) {
+        ThemePreference.System -> isSystemInDarkTheme()
+        ThemePreference.Light -> false
+        ThemePreference.Dark -> true
+    }
+    SystemBarsAppearance(darkTheme)
+
+    ExpenseSplitterTheme(darkTheme = darkTheme) {
         val startState by viewModel.startState.collectAsStateWithLifecycle()
 
         when (val state = startState) {

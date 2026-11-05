@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="settings_edit_profile">Edit profile</string>
+
+    <string name="settings_section_preferences">Preferences</string>
+    <string name="settings_section_data">Data</string>
+    <string name="settings_section_about">About</string>
+
+    <string name="settings_currency">Currency</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_system">System default</string>
+
+    <string name="settings_export">Export PDF</string>
+    <string name="settings_export_subtitle">Download expense report</string>
+    <string name="settings_export_unavailable">Add a group to export a report</string>
+    <string name="settings_export_sheet_message">Download a PDF report of your groups, expenses and balances.</string>
+    <string name="settings_export_download">Download PDF</string>
+    <!-- %1$s = file name, %2$s = folder -->
+    <string name="settings_export_saved">Saved %1$s to %2$s</string>
+    <string name="settings_export_failed">Couldn’t export the report. Please try again.</string>
+
+    <string name="settings_clear">Clear Local Data</string>
+    <string name="settings_clear_subtitle">Delete all local data</string>
+    <string name="settings_clear_sheet_title">Clear all local data?</string>
+    <string name="settings_clear_sheet_message">This permanently deletes your profile, groups, expenses and settings from this device. All data will be lost and can’t be recovered.</string>
+    <string name="settings_clear_confirm">Clear all data</string>
+    <string name="settings_clear_failed">Couldn’t clear data. Please try again.</string>
+
+    <string name="settings_about">About Expense Splitter</string>
+    <!-- %1$s = version, e.g. 1.0.0 -->
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_about_description">Expense Splitter helps friends, roommates and travel buddies share costs fairly, so everyone always knows who owes what.</string>
+    <string name="settings_about_feature_groups">• Create groups and split bills</string>
+    <string name="settings_about_feature_balances">• See who owes whom at a glance</string>
+    <string name="settings_about_feature_currencies">• Every world currency supported</string>
+    <string name="settings_about_feature_privacy">• Your data stays on this device</string>
+
+    <string name="settings_edit_name_title">Edit name</string>
+    <string name="settings_name_placeholder">Your name</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_save_failed">Couldn’t save your changes. Please try again.</string>
+    <string name="settings_cancel">Cancel</string>
+</resources>

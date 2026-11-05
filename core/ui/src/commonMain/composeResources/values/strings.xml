@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- %1$s = ISO code (JOD), %2$s = currency name (Jordanian Dinar) -->
+    <string name="currency_value">%1$s — %2$s</string>
+    <string name="currency_sheet_title">Select currency</string>
+    <string name="currency_search_placeholder">Search by name or code</string>
+    <!-- %1$s = what the user typed -->
+    <string name="currency_no_results">No currencies match “%1$s”</string>
+</resources>

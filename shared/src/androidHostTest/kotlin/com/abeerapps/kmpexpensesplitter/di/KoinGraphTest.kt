@@ -17,11 +17,11 @@ class KoinGraphTest {
 
     @Test
     fun `dependency graph is complete`() {
-        module { includes(allModules(AppConfig(isDebug = true))) }.verify(
-            // Context/SavedStateHandle come from the platform at runtime. Boolean is
-            // AppConfig's constructor arg; verify() inspects constructors even for
-            // `single { instance }` bindings.
-            extraTypes = listOf(Context::class, SavedStateHandle::class, Boolean::class),
+        module { includes(allModules(AppConfig(isDebug = true, versionName = "1.0.0"))) }.verify(
+            // Context/SavedStateHandle come from the platform at runtime. Boolean and
+            // String are AppConfig's constructor args; verify() inspects constructors
+            // even for `single { instance }` bindings.
+            extraTypes = listOf(Context::class, SavedStateHandle::class, Boolean::class, String::class),
         )
     }
 }

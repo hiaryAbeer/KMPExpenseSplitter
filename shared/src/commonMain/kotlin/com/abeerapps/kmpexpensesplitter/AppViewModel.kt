@@ -3,7 +3,9 @@ package com.abeerapps.kmpexpensesplitter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abeerapps.kmpexpensesplitter.core.domain.model.OnboardingStatus
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ThemePreference
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveOnboardingStatusUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveThemePreferenceUseCase
 import com.abeerapps.kmpexpensesplitter.navigation.AppDestination
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +28,12 @@ sealed interface AppStartState {
  */
 class AppViewModel(
     observeOnboardingStatus: ObserveOnboardingStatusUseCase,
+    observeThemePreference: ObserveThemePreferenceUseCase,
 ) : ViewModel() {
+
+    /** Theme chosen in Settings; applied to the whole app. */
+    val themePreference: StateFlow<ThemePreference> = observeThemePreference()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, ThemePreference.System)
 
     val startState: StateFlow<AppStartState> = flow {
         val destination = when (observeOnboardingStatus().first()) {

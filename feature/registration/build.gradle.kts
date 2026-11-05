@@ -13,6 +13,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":core:domain"))
             implementation(project(":core:designsystem"))
+            implementation(project(":core:ui"))
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.viewmodelSavedstate)
             implementation(libs.androidx.lifecycle.viewmodelCompose)

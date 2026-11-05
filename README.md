@@ -25,7 +25,8 @@ androidApp (Android entry)      iosApp (Swift entry, Xcode)
 | `:core:domain` | `UserProfile`, `CurrencyCode`, `SupportedCurrencies`, `UserProfileRepository` (interface), use cases, `FeatureFlags` | coroutines only |
 | `:core:data` | Repository implementations, persistence, platform file paths (`expect/actual`), Koin `dataModule` | domain |
 | `:core:designsystem` | Theme from the Figma tokens (colors, type, 16dp shapes, spacing), shared icons, components (`PrimaryButton`, `AppTextField`, `AppCard`, `EmptyState`, `AppNavigationBar`), `ObserveAsEvents` | Compose |
-| `:feature:*` | One user-facing feature: screen + ViewModel + Koin module (`onboarding`, `registration`, `home`) | domain, designsystem (**never** data or other features) |
+| `:core:ui` | Compose UI that knows domain types and is shared by features (currency picker sheet) | domain, designsystem |
+| `:feature:*` | One user-facing feature: screen + ViewModel + Koin module (`onboarding`, `registration`, `home`, `settings`) | domain, designsystem, ui (**never** data or other features) |
 | `:shared` | Wires everything: `initKoin`, `AppNavHost`, `AppViewModel` (start destination), `Shared.framework` | everything |
 
 **Presentation pattern (UDF/MVI-lite)**: each screen has `UiState` (`StateFlow`), `Action`s from the UI,
@@ -71,6 +72,22 @@ design are already implemented (see the `HomeWithGroupsPreview` preview).
 Money is stored as integer hundredths (`Money.minorUnits`) and always shown with two decimals,
 as in the design. Totals only include groups in the user's default currency until currency
 conversion exists.
+
+## Settings
+
+Profile card (tap to edit the name), **Preferences** (currency, theme), **Data** (export, clear) and
+**About**. Every row opens a bottom sheet:
+
+- **Edit name**: same rules as registration (1–50 characters).
+- **Currency**: the same searchable sheet as registration (`CurrencyPickerSheet` in `:core:ui`).
+- **Theme**: Light, Dark or System default. Stored in DataStore and applied app-wide, including
+  status-bar icon colors (`SystemBarsAppearance`).
+- **Export PDF**: enabled only when groups exist. The PDF writer is still a placeholder
+  (`UnavailableExpenseReportExporter`) because expenses aren't stored yet; replace that binding in
+  `dataModule` with platform writers (Android `PdfDocument`, iOS `UIGraphicsPDFRenderer`).
+- **Clear local data**: confirmation sheet with a red action. Wipes profile, groups and preferences,
+  then restarts at onboarding.
+- **About**: version (from Android `versionName` / iOS `CFBundleShortVersionString`) and a short summary.
 
 ## Build variants
 
@@ -122,6 +139,9 @@ Tests are written once in `commonTest` and run on the JVM and the iOS simulator
 | `CalculateBalanceSummaryUseCaseTest` | owed/owe totals, currency isolation |
 | `HomeViewModelTest` | greeting, zero balances, empty state, group search |
 | `MoneyFormatTest` | `97.75 JOD` / `+85.25 JOD` / `-45.00 JOD` formatting |
+| `SettingsUseCasesTest` | edit name/currency, clear data, export gating |
+| `LocalSettingsDataSourcesTest` | theme persistence, clear-all, export placeholder |
+| `SettingsViewModelTest` | sheets, name edit, currency, theme, export enablement, clear data |
 | `AppViewModelTest` | start destination, resolved once |
 | `KoinGraphTest` | complete DI graph |
 
@@ -165,6 +185,7 @@ python3 -m venv /tmp/venv && /tmp/venv/bin/pip install babel==2.17.0
 - **Spacing rule:** every screen uses a 16dp left/right margin (`spacing.screenHorizontal`) and the
   space between views never exceeds 16dp (`spacing.md`, the largest step in the scale). This
   overrides the larger gaps in the Figma exports.
+- **Strings:** Compose resources don't process Android `\'` / `\"` escapes; use ’ and “ ” in `strings.xml`.
 - Values come from the Figma file "Expense splliter" (page "onbording") and live in `:core:designsystem/theme`.
 - The design uses **Inter**; the app currently uses the platform font (Roboto / SF Pro). To match exactly,
   add the Inter `.ttf` files to `core/designsystem/src/commonMain/composeResources/font/` and set

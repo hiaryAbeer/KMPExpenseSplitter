@@ -12,7 +12,7 @@ class ExpenseSplitterApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        initKoin(AppConfig(isDebug = BuildConfig.DEBUG)) {
+        initKoin(AppConfig(isDebug = BuildConfig.DEBUG, versionName = BuildConfig.VERSION_NAME)) {
             androidLogger(if (BuildConfig.DEBUG) Level.INFO else Level.NONE)
             androidContext(this@ExpenseSplitterApplication)
         }

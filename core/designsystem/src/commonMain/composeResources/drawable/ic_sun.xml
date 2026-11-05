@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- From Figma settings/container.svg (light theme). Tinted at runtime. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp" android:height="20dp"
+    android:viewportWidth="20" android:viewportHeight="20">
+    <group android:translateX="-10" android:translateY="-10">
+        <path android:strokeColor="#FF000000" android:strokeWidth="1.66667"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M23.3333,19.9998C23.3333,21.8408 21.841,23.3332 20,23.3332C18.1591,23.3332 16.6667,21.8408 16.6667,19.9998C16.6667,18.1589 18.1591,16.6665 20,16.6665C21.841,16.6665 23.3333,18.1589 23.3333,19.9998Z" />
+        <path android:strokeColor="#FF000000" android:strokeWidth="1.66667"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M20,11.6665V13.3332" />
+        <path android:strokeColor="#FF000000" android:strokeWidth="1.66667"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M20,26.6665V28.3332" />
+        <path android:strokeColor="#FF000000" android:strokeWidth="1.66667"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M14.1083,14.1084L15.2833,15.2834" />
+        <path android:strokeColor="#FF000000" android:strokeWidth="1.66667"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M24.7167,24.7168L25.8917,25.8918" />
+        <path android:strokeColor="#FF000000" android:strokeWidth="1.66667"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M11.6667,20H13.3333" />
+        <path android:strokeColor="#FF000000" android:strokeWidth="1.66667"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M26.6667,20H28.3333" />
+        <path android:strokeColor="#FF000000" android:strokeWidth="1.66667"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M15.2833,24.7168L14.1083,25.8918" />
+        <path android:strokeColor="#FF000000" android:strokeWidth="1.66667"
+            android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M25.8917,14.1084L24.7167,15.2834" />
+    </group>
+</vector>

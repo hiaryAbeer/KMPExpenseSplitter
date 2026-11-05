@@ -9,7 +9,7 @@ import platform.UIKit.UIViewController
  * iOS entry points, called from Swift.
  *
  * Swift names: `MainViewControllerKt.MainViewController()` and
- * `MainViewControllerKt.startKoin(isDebug:)`.
+ * `MainViewControllerKt.startKoin(isDebug:versionName:)`.
  */
 @Suppress("FunctionName", "unused") // Called from Swift.
 fun MainViewController(): UIViewController = ComposeUIViewController { App() }
@@ -20,6 +20,6 @@ fun MainViewController(): UIViewController = ComposeUIViewController { App() }
  * names starting with `init` with `do`.
  */
 @Suppress("unused") // Called from Swift.
-fun startKoin(isDebug: Boolean) {
-    initKoin(AppConfig(isDebug = isDebug))
+fun startKoin(isDebug: Boolean, versionName: String) {
+    initKoin(AppConfig(isDebug = isDebug, versionName = versionName))
 }

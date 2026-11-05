@@ -1,5 +1,6 @@
 package com.abeerapps.kmpexpensesplitter.config
 
+import com.abeerapps.kmpexpensesplitter.core.domain.config.AppInfo
 import com.abeerapps.kmpexpensesplitter.core.domain.config.FeatureFlags
 
 /**
@@ -9,10 +10,12 @@ import com.abeerapps.kmpexpensesplitter.core.domain.config.FeatureFlags
  * same shared code behaves correctly in debug and production builds.
  *
  * @property isDebug enables verbose logging and debug-only tooling.
+ * @property versionName user-facing version (Android versionName / iOS CFBundleShortVersionString).
  */
 data class AppConfig(
     val isDebug: Boolean,
-)
+    override val versionName: String,
+) : AppInfo
 
 /**
  * Release-controlled feature flags. Flip a value here to ship/hide a feature;

@@ -46,9 +46,12 @@ import com.abeerapps.kmpexpensesplitter.core.designsystem.component.FieldLabel
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.PrimaryButton
 import com.abeerapps.kmpexpensesplitter.core.designsystem.theme.ExpenseSplitterTheme
 import com.abeerapps.kmpexpensesplitter.core.designsystem.util.ObserveAsEvents
+import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.Res as DsRes
+import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_user
+import com.abeerapps.kmpexpensesplitter.core.ui.CurrencyField
+import com.abeerapps.kmpexpensesplitter.core.ui.CurrencyPickerSheet
 import com.abeerapps.kmpexpensesplitter.feature.registration.resources.Res
 import com.abeerapps.kmpexpensesplitter.feature.registration.resources.ic_profile_avatar
-import com.abeerapps.kmpexpensesplitter.feature.registration.resources.ic_user
 import com.abeerapps.kmpexpensesplitter.feature.registration.resources.registration_currency_label
 import com.abeerapps.kmpexpensesplitter.feature.registration.resources.registration_error_save_failed
 import com.abeerapps.kmpexpensesplitter.feature.registration.resources.registration_name_label
@@ -64,9 +67,6 @@ import org.koin.compose.viewmodel.koinViewModel
 /** Test tags for UI tests. */
 object RegistrationTestTags {
     const val NAME_FIELD = "registration_name"
-    const val CURRENCY_FIELD = "registration_currency"
-    const val CURRENCY_SHEET = "registration_currency_sheet"
-    const val CURRENCY_SEARCH = "registration_currency_search"
     const val SAVE_BUTTON = "registration_save"
 }
 
@@ -221,7 +221,7 @@ private fun Form(
             value = uiState.name,
             onValueChange = { onAction(RegistrationAction.NameChanged(it)) },
             placeholder = stringResource(Res.string.registration_name_placeholder),
-            leadingIcon = painterResource(Res.drawable.ic_user),
+            leadingIcon = painterResource(DsRes.drawable.ic_user),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Words,
                 autoCorrectEnabled = false,

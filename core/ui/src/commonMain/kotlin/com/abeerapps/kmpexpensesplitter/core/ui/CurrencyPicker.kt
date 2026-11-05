@@ -1,4 +1,4 @@
-package com.abeerapps.kmpexpensesplitter.feature.registration
+package com.abeerapps.kmpexpensesplitter.core.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
@@ -50,21 +50,33 @@ import com.abeerapps.kmpexpensesplitter.core.designsystem.component.FieldContain
 import com.abeerapps.kmpexpensesplitter.core.designsystem.theme.ExpenseSplitterTheme
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Currency
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
-import com.abeerapps.kmpexpensesplitter.feature.registration.resources.Res
-import com.abeerapps.kmpexpensesplitter.feature.registration.resources.ic_chevron_up
-import com.abeerapps.kmpexpensesplitter.feature.registration.resources.ic_currency
-import com.abeerapps.kmpexpensesplitter.feature.registration.resources.ic_search
-import com.abeerapps.kmpexpensesplitter.feature.registration.resources.registration_currency_no_results
-import com.abeerapps.kmpexpensesplitter.feature.registration.resources.registration_currency_search_placeholder
-import com.abeerapps.kmpexpensesplitter.feature.registration.resources.registration_currency_sheet_title
-import com.abeerapps.kmpexpensesplitter.feature.registration.resources.registration_currency_value
+import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.Res as DsRes
+import com.abeerapps.kmpexpensesplitter.core.ui.resources.Res
+import com.abeerapps.kmpexpensesplitter.core.ui.resources.ic_chevron_up
+import com.abeerapps.kmpexpensesplitter.core.ui.resources.ic_currency
+import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_search
+import com.abeerapps.kmpexpensesplitter.core.ui.resources.currency_no_results
+import com.abeerapps.kmpexpensesplitter.core.ui.resources.currency_search_placeholder
+import com.abeerapps.kmpexpensesplitter.core.ui.resources.currency_sheet_title
+import com.abeerapps.kmpexpensesplitter.core.ui.resources.currency_value
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
+/** Test tags for UI tests of the currency picker. */
+object CurrencyPickerTestTags {
+    const val FIELD = "currency_field"
+    const val SHEET = "currency_sheet"
+    const val SEARCH = "currency_search"
+}
+
+/** "JOD — Jordanian Dinar": how a selected currency is shown everywhere. */
+@Composable
+fun Currency.displayLabel(): String = stringResource(Res.string.currency_value, code.value, name)
+
 /** The "Default currency" field. Tapping it opens [CurrencyPickerSheet]. */
 @Composable
-internal fun CurrencyField(
+fun CurrencyField(
     selected: Currency,
     isSheetVisible: Boolean,
     onClick: () -> Unit,
@@ -79,10 +91,10 @@ internal fun CurrencyField(
         modifier = modifier
             .clip(MaterialTheme.shapes.large)
             .clickable(role = Role.DropdownList, onClick = onClick)
-            .testTag(RegistrationTestTags.CURRENCY_FIELD),
+            .testTag(CurrencyPickerTestTags.FIELD),
     ) {
         Text(
-            text = stringResource(Res.string.registration_currency_value, selected.code.value, selected.name),
+            text = selected.displayLabel(),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
@@ -99,12 +111,15 @@ internal fun CurrencyField(
 }
 
 /**
+ * Shared by registration and settings. The caller owns the query and results
+ * (from `SearchCurrenciesUseCase`), so search stays testable in ViewModels.
+ *
  * Full-height bottom sheet listing every currency, with search by code, name,
  * country or symbol. Selecting a row animates the sheet away, then reports it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun CurrencyPickerSheet(
+fun CurrencyPickerSheet(
     selected: Currency,
     query: String,
     results: List<Currency>,
@@ -127,11 +142,11 @@ internal fun CurrencyPickerSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
-        modifier = Modifier.testTag(RegistrationTestTags.CURRENCY_SHEET),
+        modifier = Modifier.testTag(CurrencyPickerTestTags.SHEET),
     ) {
         Column(Modifier.fillMaxHeight().imePadding()) {
             Text(
-                text = stringResource(Res.string.registration_currency_sheet_title),
+                text = stringResource(Res.string.currency_sheet_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = ExpenseSplitterTheme.spacing.screenHorizontal).semantics { heading() },
@@ -140,11 +155,11 @@ internal fun CurrencyPickerSheet(
             AppTextField(
                 value = query,
                 onValueChange = onQueryChange,
-                placeholder = stringResource(Res.string.registration_currency_search_placeholder),
-                leadingIcon = painterResource(Res.drawable.ic_search),
+                placeholder = stringResource(Res.string.currency_search_placeholder),
+                leadingIcon = painterResource(DsRes.drawable.ic_search),
                 keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-                modifier = Modifier.padding(horizontal = ExpenseSplitterTheme.spacing.screenHorizontal).testTag(RegistrationTestTags.CURRENCY_SEARCH),
+                modifier = Modifier.padding(horizontal = ExpenseSplitterTheme.spacing.screenHorizontal).testTag(CurrencyPickerTestTags.SEARCH),
             )
             Spacer(Modifier.height(8.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -152,7 +167,7 @@ internal fun CurrencyPickerSheet(
             if (results.isEmpty()) {
                 Box(Modifier.fillMaxWidth().padding(ExpenseSplitterTheme.spacing.md), contentAlignment = Alignment.Center) {
                     Text(
-                        text = stringResource(Res.string.registration_currency_no_results, query.trim()),
+                        text = stringResource(Res.string.currency_no_results, query.trim()),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,

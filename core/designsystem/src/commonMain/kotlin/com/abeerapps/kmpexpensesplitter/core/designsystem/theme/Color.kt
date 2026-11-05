@@ -88,7 +88,11 @@ data class ExtendedColors(
     val avatarOverflow: Color,
     /** Initials on coloured avatars: white in both themes, as in the design. */
     val onAvatar: Color = Color.White,
-)
+) {
+    /** Stable avatar colour for a person: the same name always gets the same colour. */
+    fun avatarColorFor(name: String): Color =
+        avatarPalette[(name.trim().lowercase().hashCode() and Int.MAX_VALUE) % avatarPalette.size]
+}
 
 private val AvatarPalette = listOf(
     Color(0xFF615FFF), // Indigo

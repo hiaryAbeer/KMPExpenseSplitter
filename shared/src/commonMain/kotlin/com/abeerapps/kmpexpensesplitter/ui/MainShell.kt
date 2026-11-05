@@ -19,6 +19,7 @@ import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_home
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_settings
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_users
 import com.abeerapps.kmpexpensesplitter.feature.home.HomeScreen
+import com.abeerapps.kmpexpensesplitter.feature.settings.SettingsScreen
 import com.abeerapps.kmpexpensesplitter.resources.Res
 import com.abeerapps.kmpexpensesplitter.resources.nav_groups
 import com.abeerapps.kmpexpensesplitter.resources.nav_home
@@ -31,7 +32,7 @@ private enum class MainTab { Home, Groups, Settings }
 
 /**
  * Main app shell after registration: the design's bottom navigation with
- * Home, Groups and Settings. Groups and Settings are placeholders for now.
+ * Home, Groups and Settings. Groups is a placeholder for now.
  *
  * The selected tab survives rotation and process death (rememberSaveable).
  */
@@ -39,6 +40,7 @@ private enum class MainTab { Home, Groups, Settings }
 internal fun MainShell(
     onCreateGroup: () -> Unit,
     onGroupClick: (groupId: String) -> Unit,
+    onDataCleared: () -> Unit,
 ) {
     var selected by rememberSaveable { mutableIntStateOf(MainTab.Home.ordinal) }
     val items = listOf(
@@ -59,7 +61,7 @@ internal fun MainShell(
             when (MainTab.entries[selected]) {
                 MainTab.Home -> HomeScreen(onCreateGroup = onCreateGroup, onGroupClick = onGroupClick)
                 MainTab.Groups -> PlaceholderScreen(title = "Groups")
-                MainTab.Settings -> PlaceholderScreen(title = "Settings")
+                MainTab.Settings -> SettingsScreen(onDataCleared = onDataCleared)
             }
         }
     }

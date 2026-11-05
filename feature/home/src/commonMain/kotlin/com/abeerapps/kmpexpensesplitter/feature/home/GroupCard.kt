@@ -36,7 +36,6 @@ import com.abeerapps.kmpexpensesplitter.feature.home.resources.Res
 import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_group_card_description
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.absoluteValue
 
 private const val MAX_VISIBLE_AVATARS = 3
 private val AvatarSize = 32.dp
@@ -128,7 +127,7 @@ private fun AvatarStack(names: List<String>, modifier: Modifier = Modifier) {
         visible.forEachIndexed { index, name ->
             Avatar(
                 text = name.trim().take(1).uppercase(),
-                background = colors.avatarPalette[name.hashCode().absoluteValue % colors.avatarPalette.size],
+                background = colors.avatarColorFor(name),
                 textColor = colors.onAvatar,
                 modifier = Modifier.offset(x = AvatarOverlapStep * index),
             )

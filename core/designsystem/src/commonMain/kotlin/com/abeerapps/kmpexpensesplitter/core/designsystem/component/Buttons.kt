@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalContentColor
@@ -29,10 +30,12 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isLoading: Boolean = false,
+    colors: ButtonColors = ButtonDefaults.buttonColors(),
 ) {
     Button(
         onClick = { if (!isLoading) onClick() },
         enabled = enabled,
+        colors = colors,
         shape = MaterialTheme.shapes.large,
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp, pressedElevation = 2.dp),
         contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp),

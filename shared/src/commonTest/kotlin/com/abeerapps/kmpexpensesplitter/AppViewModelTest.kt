@@ -2,9 +2,12 @@ package com.abeerapps.kmpexpensesplitter
 
 import app.cash.turbine.test
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ThemePreference
 import com.abeerapps.kmpexpensesplitter.core.domain.model.UserProfile
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.AppPreferencesRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveOnboardingStatusUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveThemePreferenceUseCase
 import com.abeerapps.kmpexpensesplitter.navigation.AppDestination
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,7 +34,16 @@ class AppViewModelTest {
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel() = AppViewModel(ObserveOnboardingStatusUseCase(repository))
+    private fun viewModel() = AppViewModel(
+        ObserveOnboardingStatusUseCase(repository),
+        ObserveThemePreferenceUseCase(FakePreferences()),
+    )
+
+    private class FakePreferences : AppPreferencesRepository {
+        val theme = MutableStateFlow(ThemePreference.System)
+        override fun observeTheme(): Flow<ThemePreference> = theme
+        override suspend fun setTheme(theme: ThemePreference) { this.theme.value = theme }
+    }
 
     @Test
     fun `no registered user starts on onboarding`() = runTest(dispatcher) {

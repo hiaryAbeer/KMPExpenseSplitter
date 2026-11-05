@@ -2,16 +2,15 @@ package com.abeerapps.kmpexpensesplitter.core.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.mutablePreferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import app.cash.turbine.test
 import co.touchlab.kermit.Logger
 import co.touchlab.kermit.loggerConfigInit
+import com.abeerapps.kmpexpensesplitter.core.data.testutil.InMemoryDataStore
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
 import com.abeerapps.kmpexpensesplitter.core.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import okio.IOException
@@ -79,17 +78,6 @@ class DataStoreUserProfileRepositoryTest {
             assertNull(awaitItem())
             awaitComplete()
         }
-    }
-
-    /** Minimal in-memory DataStore; avoids touching the file system in unit tests. */
-    private class InMemoryDataStore(
-        initial: Preferences = emptyPreferences(),
-    ) : DataStore<Preferences> {
-        private val state = MutableStateFlow(initial)
-        override val data: Flow<Preferences> = state
-        override suspend fun updateData(
-            transform: suspend (t: Preferences) -> Preferences,
-        ): Preferences = transform(state.value).also { state.value = it }
     }
 
     private class FailingDataStore : DataStore<Preferences> {

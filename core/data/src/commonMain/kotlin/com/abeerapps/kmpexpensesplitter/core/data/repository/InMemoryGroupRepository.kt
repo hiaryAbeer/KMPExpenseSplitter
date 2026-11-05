@@ -17,4 +17,9 @@ internal class InMemoryGroupRepository : GroupRepository {
     private val groups = MutableStateFlow<List<GroupSummary>>(emptyList())
 
     override fun observeGroups(): Flow<List<GroupSummary>> = groups.asStateFlow()
+
+    /** Used by "Clear local data". */
+    fun clear() {
+        groups.value = emptyList()
+    }
 }

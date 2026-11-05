@@ -37,8 +37,10 @@ include(":shared")          // Umbrella: app shell, navigation, DI graph, iOS fr
 include(":core:domain")     // Entities, repository contracts, use cases (pure Kotlin)
 include(":core:data")       // Repository implementations, persistence
 include(":core:designsystem") // Theme + reusable Compose components
+include(":core:ui")           // Domain-aware UI shared by features (currency picker)
 
 // Features
 include(":feature:onboarding")
 include(":feature:registration")
 include(":feature:home")
+include(":feature:settings")
