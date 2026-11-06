@@ -54,6 +54,7 @@ object GroupSummaries {
                         .map { it.name },
                     totalSpent = Money(groupExpenses.sumOf { it.amount.minorUnits }, currency),
                     yourBalance = Money(groupExpenses.sumOf { it.yourBalanceChange() }, currency),
+                    lastActivity = lastActivity,
                 )
             }
             .sortedByDescending { it.first } // Stable: same-day groups keep repository order.

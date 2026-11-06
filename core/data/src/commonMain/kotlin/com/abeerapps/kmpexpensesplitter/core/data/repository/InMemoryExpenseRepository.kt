@@ -22,6 +22,10 @@ internal class InMemoryExpenseRepository : ExpenseRepository {
         expenses.update { current -> (listOf(expense) + current).sortedByDescending { it.startDate } }
     }
 
+    override suspend fun deleteExpensesIn(expenseGroupId: String) {
+        expenses.update { all -> all.filterNot { it.expenseGroupId == expenseGroupId } }
+    }
+
     /** Used by "Clear local data". */
     fun clear() {
         expenses.value = emptyList()

@@ -2,9 +2,12 @@ package com.abeerapps.kmpexpensesplitter.core.domain.usecase
 
 import com.abeerapps.kmpexpensesplitter.core.domain.config.DateProvider
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Expense
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -23,6 +26,16 @@ class ObserveExpenseGroupsUseCase(private val repository: ExpenseGroupRepository
 
 enum class ExpenseGroupNameError { Blank, TooLong }
 
+/** Expense group names are 1–50 characters (after trimming); they may repeat. */
+fun validateExpenseGroupName(name: String): ExpenseGroupNameError? {
+    val trimmed = name.trim()
+    return when {
+        trimmed.isEmpty() -> ExpenseGroupNameError.Blank
+        trimmed.length > ExpenseGroup.MAX_NAME_LENGTH -> ExpenseGroupNameError.TooLong
+        else -> null
+    }
+}
+
 sealed interface CreateExpenseGroupResult {
     data class Success(val group: ExpenseGroup) : CreateExpenseGroupResult
     data class Invalid(val error: ExpenseGroupNameError) : CreateExpenseGroupResult
@@ -38,14 +51,7 @@ class CreateExpenseGroupUseCase(
     private val dateProvider: DateProvider,
     private val newId: () -> String = ::randomId,
 ) {
-    fun validate(name: String): ExpenseGroupNameError? {
-        val trimmed = name.trim()
-        return when {
-            trimmed.isEmpty() -> ExpenseGroupNameError.Blank
-            trimmed.length > ExpenseGroup.MAX_NAME_LENGTH -> ExpenseGroupNameError.TooLong
-            else -> null
-        }
-    }
+    fun validate(name: String): ExpenseGroupNameError? = validateExpenseGroupName(name)
 
     suspend operator fun invoke(name: String): CreateExpenseGroupResult {
         validate(name)?.let { return CreateExpenseGroupResult.Invalid(it) }
@@ -64,4 +70,53 @@ class CreateExpenseGroupUseCase(
         @OptIn(ExperimentalUuidApi::class)
         fun randomId(): String = Uuid.random().toString()
     }
+}
+
+sealed interface RenameExpenseGroupResult {
+    data class Success(val group: ExpenseGroup) : RenameExpenseGroupResult
+    data class Invalid(val error: ExpenseGroupNameError) : RenameExpenseGroupResult
+    data object NotFound : RenameExpenseGroupResult
+    data object StorageError : RenameExpenseGroupResult
+}
+
+/** Renames an expense group (same name rules as creating one). Its id never changes. */
+class RenameExpenseGroupUseCase(private val repository: ExpenseGroupRepository) {
+    suspend operator fun invoke(groupId: String, name: String): RenameExpenseGroupResult {
+        validateExpenseGroupName(name)?.let { return RenameExpenseGroupResult.Invalid(it) }
+        val current = repository.observeExpenseGroups().first().firstOrNull { it.id == groupId }
+            ?: return RenameExpenseGroupResult.NotFound
+        val renamed = current.copy(name = name.trim())
+        return try {
+            repository.updateExpenseGroup(renamed)
+            RenameExpenseGroupResult.Success(renamed)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            RenameExpenseGroupResult.StorageError
+        }
+    }
+}
+
+/**
+ * Deletes an expense group *and its expenses* (the UI asks for confirmation first).
+ * Expenses go first, so a failure never leaves expenses pointing at a missing group.
+ */
+class DeleteExpenseGroupUseCase(
+    private val repository: ExpenseGroupRepository,
+    private val expenses: ExpenseRepository,
+) {
+    suspend operator fun invoke(groupId: String): DeleteResult = try {
+        expenses.deleteExpensesIn(groupId)
+        repository.deleteExpenseGroup(groupId)
+        DeleteResult.Deleted
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        DeleteResult.StorageError
+    }
+}
+
+/** Emits every expense (used by the manage screens to show usage). */
+class ObserveExpensesUseCase(private val repository: ExpenseRepository) {
+    operator fun invoke(): Flow<List<Expense>> = repository.observeExpenses()
 }

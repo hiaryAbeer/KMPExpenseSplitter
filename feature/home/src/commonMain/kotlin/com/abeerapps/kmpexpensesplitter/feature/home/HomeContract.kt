@@ -12,7 +12,7 @@ data class HomeUiState(
     val userName: String = "",
     val owedToYou: Money = Money.zero(SupportedCurrencies.default.code),
     val youOwe: Money = Money.zero(SupportedCurrencies.default.code),
-    /** Groups matching the search, most recent first. */
+    /** Up to 3 groups matching the search, most recently active first. */
     val groups: List<GroupSummary> = emptyList(),
     /** All of the user's groups, ignoring search ("4 groups"). */
     val totalGroupCount: Int = 0,

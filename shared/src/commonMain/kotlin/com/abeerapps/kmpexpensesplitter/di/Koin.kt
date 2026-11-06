@@ -8,12 +8,17 @@ import com.abeerapps.kmpexpensesplitter.config.StaticFeatureFlags
 import com.abeerapps.kmpexpensesplitter.core.data.di.dataModule
 import com.abeerapps.kmpexpensesplitter.core.domain.config.AppInfo
 import com.abeerapps.kmpexpensesplitter.core.domain.config.FeatureFlags
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreateExpenseGroupUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreatePeopleGroupUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveOnboardingStatusUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObservePeopleGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveThemePreferenceUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveUserProfileUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.SearchCurrenciesUseCase
 import com.abeerapps.kmpexpensesplitter.feature.expense.di.expenseModule
+import com.abeerapps.kmpexpensesplitter.feature.groups.di.groupsModule
 import com.abeerapps.kmpexpensesplitter.feature.home.di.homeModule
 import com.abeerapps.kmpexpensesplitter.feature.onboarding.di.onboardingModule
 import com.abeerapps.kmpexpensesplitter.feature.registration.di.registrationModule
@@ -36,6 +41,11 @@ internal fun appModule(config: AppConfig): Module = module {
     factoryOf(::ObserveOnboardingStatusUseCase)
     factoryOf(::ObserveUserProfileUseCase)
     factoryOf(::ObserveGroupsUseCase)
+    // Group use cases shared by Add Expense and the Groups tab's manage screens.
+    factoryOf(::ObserveExpenseGroupsUseCase)
+    factory { CreateExpenseGroupUseCase(repository = get(), dateProvider = get()) }
+    factoryOf(::ObservePeopleGroupsUseCase)
+    factory { CreatePeopleGroupUseCase(groups = get(), profiles = get(), dateProvider = get()) }
     factoryOf(::ObserveThemePreferenceUseCase)
     // Single: it builds a search index of the whole currency catalog once.
     single { SearchCurrenciesUseCase() }
@@ -51,6 +61,7 @@ internal fun allModules(config: AppConfig): List<Module> = listOf(
     homeModule,
     settingsModule,
     expenseModule,
+    groupsModule,
 )
 
 /**

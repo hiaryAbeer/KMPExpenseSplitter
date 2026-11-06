@@ -48,7 +48,7 @@ fun EmptyState(
     ) {
         Box(
             modifier = Modifier
-                .size(160.dp)
+                .size(100.dp)
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(24.dp)),
             contentAlignment = Alignment.Center,
         ) {
@@ -56,7 +56,7 @@ fun EmptyState(
                 painter = icon,
                 contentDescription = null, // Decorative; the title describes the state.
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(96.dp),
+                modifier = Modifier.size(46.dp),
             )
         }
         Spacer(Modifier.height(ExpenseSplitterTheme.spacing.md))

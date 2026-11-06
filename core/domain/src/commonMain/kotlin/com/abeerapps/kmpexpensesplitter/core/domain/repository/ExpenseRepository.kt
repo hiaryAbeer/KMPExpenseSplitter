@@ -11,4 +11,7 @@ interface ExpenseRepository {
 
     /** Stores [expense]. Throws on storage failure. */
     suspend fun addExpense(expense: Expense)
+
+    /** Removes every expense of the expense group [expenseGroupId]. Throws on storage failure. */
+    suspend fun deleteExpensesIn(expenseGroupId: String)
 }

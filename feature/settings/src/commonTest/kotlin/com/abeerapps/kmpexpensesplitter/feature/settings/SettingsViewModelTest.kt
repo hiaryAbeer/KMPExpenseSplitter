@@ -57,15 +57,20 @@ class SettingsViewModelTest {
         override suspend fun saveProfile(profile: UserProfile) { this.profile.value = profile }
     }
     private val groups = object : ExpenseGroupRepository {
+        override suspend fun updateExpenseGroup(group: ExpenseGroup) = Unit
+        override suspend fun deleteExpenseGroup(groupId: String) = Unit
         val groups = MutableStateFlow<List<ExpenseGroup>>(emptyList())
         override fun observeExpenseGroups(): Flow<List<ExpenseGroup>> = groups
         override suspend fun createExpenseGroup(group: ExpenseGroup) { groups.value = listOf(group) + groups.value }
     }
     private val people = object : PeopleGroupRepository {
+        override suspend fun updateGroup(group: PeopleGroup) = Unit
+        override suspend fun deleteGroup(groupId: String) = Unit
         override fun observeGroups(): Flow<List<PeopleGroup>> = MutableStateFlow(emptyList())
         override suspend fun createGroup(group: PeopleGroup) = Unit
     }
     private val expenses = object : ExpenseRepository {
+        override suspend fun deleteExpensesIn(expenseGroupId: String) = Unit
         override fun observeExpenses(): Flow<List<Expense>> = MutableStateFlow(emptyList())
         override suspend fun addExpense(expense: Expense) = Unit
     }

@@ -21,6 +21,14 @@ sealed interface AppDestination {
     @Serializable
     data object AddExpense : AppDestination
 
+    /** Search, add, rename and delete expense groups (from the Groups tab header). */
+    @Serializable
+    data object ManageExpenseGroups : AppDestination
+
+    /** Search, add, edit and delete people groups (from the Groups tab header). */
+    @Serializable
+    data object ManagePeopleGroups : AppDestination
+
     /** Placeholder until group details are built. */
     @Serializable
     data class GroupDetails(val groupId: String) : AppDestination

@@ -126,6 +126,17 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `recent groups show at most three but count all`() = runTest {
+        groups.groups.value = (1..5).map { group("$it", "Trip $it", 0) }
+
+        viewModel().uiState.test {
+            val state = awaitLoaded()
+            assertEquals(listOf("Trip 1", "Trip 2", "Trip 3"), state.groups.map { it.name })
+            assertEquals(5, state.totalGroupCount)
+        }
+    }
+
+    @Test
     fun `search filters by name case-insensitively and keeps the total count`() = runTest {
         groups.groups.value = listOf(group("1", "Aqaba Trip", 0), group("2", "Apartment Bills", 0))
         val vm = viewModel()
@@ -163,18 +174,23 @@ class HomeViewModelTest {
     }
 
     private class FakeExpenseGroups : ExpenseGroupRepository {
+        override suspend fun updateExpenseGroup(group: ExpenseGroup) = Unit
+        override suspend fun deleteExpenseGroup(groupId: String) = Unit
         val groups = MutableStateFlow<List<ExpenseGroup>>(emptyList())
         override fun observeExpenseGroups(): Flow<List<ExpenseGroup>> = groups
         override suspend fun createExpenseGroup(group: ExpenseGroup) { groups.value = listOf(group) + groups.value }
     }
 
     private class FakePeopleGroups : PeopleGroupRepository {
+        override suspend fun updateGroup(group: PeopleGroup) = Unit
+        override suspend fun deleteGroup(groupId: String) = Unit
         val groups = MutableStateFlow<List<PeopleGroup>>(emptyList())
         override fun observeGroups(): Flow<List<PeopleGroup>> = groups
         override suspend fun createGroup(group: PeopleGroup) { groups.value = listOf(group) + groups.value }
     }
 
     private class FakeExpenses : ExpenseRepository {
+        override suspend fun deleteExpensesIn(expenseGroupId: String) = Unit
         val expenses = MutableStateFlow<List<Expense>>(emptyList())
         override fun observeExpenses(): Flow<List<Expense>> = expenses
         override suspend fun addExpense(expense: Expense) { expenses.value += expense }

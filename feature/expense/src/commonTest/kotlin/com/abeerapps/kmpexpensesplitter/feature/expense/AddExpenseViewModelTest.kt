@@ -139,7 +139,7 @@ class AddExpenseViewModelTest {
         vm.onAction(AddExpenseAction.GroupClicked)
         vm.onAction(AddExpenseAction.AddGroupClicked)
         assertEquals(AddExpenseSheet.CreateGroup, vm.uiState.value.openSheet)
-        assertFalse(vm.uiState.value.newGroup.canCreate)
+        assertFalse(vm.uiState.value.newGroup.canSave)
 
         vm.onAction(AddExpenseAction.NewGroupNameChanged("Aqaba"))
         vm.onAction(AddExpenseAction.MemberInputChanged("Sara"))
@@ -149,7 +149,7 @@ class AddExpenseViewModelTest {
         assertEquals(MemberNameError.Duplicate, vm.uiState.value.newGroup.memberError)
         // A valid name still in the input is included on "Add".
         vm.onAction(AddExpenseAction.MemberInputChanged("Omar"))
-        assertTrue(vm.uiState.value.newGroup.canCreate)
+        assertTrue(vm.uiState.value.newGroup.canSave)
 
         vm.onAction(AddExpenseAction.CreateGroupClicked)
 
@@ -176,20 +176,20 @@ class AddExpenseViewModelTest {
     fun `add needs a group name and at least one member`() {
         val vm = viewModel()
         vm.onAction(AddExpenseAction.AddGroupClicked)
-        assertFalse(vm.uiState.value.newGroup.canCreate) // You're in, but no name yet.
+        assertFalse(vm.uiState.value.newGroup.canSave) // You're in, but no name yet.
 
         vm.onAction(AddExpenseAction.NewGroupNameChanged("Solo"))
-        assertTrue(vm.uiState.value.newGroup.canCreate) // You alone are enough.
+        assertTrue(vm.uiState.value.newGroup.canSave) // You alone are enough.
 
         vm.onAction(AddExpenseAction.YouRemoved)
         assertFalse(vm.uiState.value.newGroup.includeYou)
-        assertFalse(vm.uiState.value.newGroup.canCreate) // Nobody left.
+        assertFalse(vm.uiState.value.newGroup.canSave) // Nobody left.
 
         vm.onAction(AddExpenseAction.MemberInputChanged("Sara"))
         vm.onAction(AddExpenseAction.AddMemberClicked)
-        assertTrue(vm.uiState.value.newGroup.canCreate)
+        assertTrue(vm.uiState.value.newGroup.canSave)
         vm.onAction(AddExpenseAction.MemberRemoved(0))
-        assertFalse(vm.uiState.value.newGroup.canCreate)
+        assertFalse(vm.uiState.value.newGroup.canSave)
     }
 
     @Test
@@ -418,6 +418,8 @@ class AddExpenseViewModelTest {
     }
 
     private class FakeGroups : PeopleGroupRepository {
+        override suspend fun updateGroup(group: PeopleGroup) = Unit
+        override suspend fun deleteGroup(groupId: String) = Unit
         val groups = MutableStateFlow<List<PeopleGroup>>(emptyList())
         override fun observeGroups(): Flow<List<PeopleGroup>> = groups
         override suspend fun createGroup(group: PeopleGroup) {
@@ -426,6 +428,8 @@ class AddExpenseViewModelTest {
     }
 
     private class FakeExpenseGroups(initial: List<ExpenseGroup>) : ExpenseGroupRepository {
+        override suspend fun updateExpenseGroup(group: ExpenseGroup) = Unit
+        override suspend fun deleteExpenseGroup(groupId: String) = Unit
         val groups = MutableStateFlow(initial)
         override fun observeExpenseGroups(): Flow<List<ExpenseGroup>> = groups
         override suspend fun createExpenseGroup(group: ExpenseGroup) {
@@ -434,6 +438,7 @@ class AddExpenseViewModelTest {
     }
 
     private class FakeExpenses : ExpenseRepository {
+        override suspend fun deleteExpensesIn(expenseGroupId: String) = Unit
         val stored = mutableListOf<Expense>()
         var fail = false
         override fun observeExpenses(): Flow<List<Expense>> = MutableStateFlow(stored.toList())

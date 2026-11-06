@@ -1,4 +1,4 @@
-package com.abeerapps.kmpexpensesplitter.feature.home
+package com.abeerapps.kmpexpensesplitter.core.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,8 +32,8 @@ import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.Res as DsRes
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_users
 import com.abeerapps.kmpexpensesplitter.core.designsystem.theme.ExpenseSplitterTheme
 import com.abeerapps.kmpexpensesplitter.core.domain.model.GroupSummary
-import com.abeerapps.kmpexpensesplitter.feature.home.resources.Res
-import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_group_card_description
+import com.abeerapps.kmpexpensesplitter.core.ui.resources.Res
+import com.abeerapps.kmpexpensesplitter.core.ui.resources.group_card_description
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -42,18 +42,18 @@ private val AvatarSize = 32.dp
 private val AvatarOverlapStep = 24.dp // Each avatar overlaps the previous by 8dp.
 
 /**
- * One group on Home: icon tile | name + your balance / member avatars + total.
+ * One expense group (Home, Groups tab): icon tile | name + your balance / member avatars + total.
  * A settled group (zero balance) shows no balance, as in the design.
  */
 @Composable
-internal fun GroupCard(
+fun GroupCard(
     group: GroupSummary,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = ExpenseSplitterTheme.extendedColors
     val description = stringResource(
-        Res.string.home_group_card_description,
+        Res.string.group_card_description,
         group.name,
         group.yourBalance.format(showSign = true),
         group.totalSpent.format(),

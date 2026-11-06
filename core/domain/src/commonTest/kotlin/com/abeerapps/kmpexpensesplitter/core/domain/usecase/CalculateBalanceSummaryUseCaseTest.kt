@@ -19,6 +19,7 @@ class CalculateBalanceSummaryUseCaseTest {
         memberNames = listOf("A"),
         totalSpent = Money(100_00, currency),
         yourBalance = Money(balance, currency),
+        lastActivity = kotlinx.datetime.LocalDate(2026, 4, 29),
     )
 
     @Test

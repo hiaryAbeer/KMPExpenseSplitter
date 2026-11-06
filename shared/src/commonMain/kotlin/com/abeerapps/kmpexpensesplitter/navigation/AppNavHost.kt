@@ -7,6 +7,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.abeerapps.kmpexpensesplitter.feature.expense.AddExpenseScreen
+import com.abeerapps.kmpexpensesplitter.feature.groups.manage.ManageExpenseGroupsScreen
+import com.abeerapps.kmpexpensesplitter.feature.groups.manage.ManagePeopleGroupsScreen
 import com.abeerapps.kmpexpensesplitter.feature.onboarding.OnboardingScreen
 import com.abeerapps.kmpexpensesplitter.feature.registration.RegistrationScreen
 import com.abeerapps.kmpexpensesplitter.ui.MainShell
@@ -53,6 +55,8 @@ fun AppNavHost(
         composable<AppDestination.Home> {
             MainShell(
                 onAddExpense = { navController.navigate(AppDestination.AddExpense) { launchSingleTop = true } },
+                onManageExpenseGroups = { navController.navigate(AppDestination.ManageExpenseGroups) { launchSingleTop = true } },
+                onManagePeopleGroups = { navController.navigate(AppDestination.ManagePeopleGroups) { launchSingleTop = true } },
                 onGroupClick = { id -> navController.navigate(AppDestination.GroupDetails(id)) },
                 onDataCleared = {
                     // Fresh start: nothing to go back to.
@@ -64,6 +68,12 @@ fun AppNavHost(
         }
         composable<AppDestination.AddExpense> {
             AddExpenseScreen(onBack = navController::navigateUp, onSaved = navController::navigateUp)
+        }
+        composable<AppDestination.ManageExpenseGroups> {
+            ManageExpenseGroupsScreen(onBack = navController::navigateUp)
+        }
+        composable<AppDestination.ManagePeopleGroups> {
+            ManagePeopleGroupsScreen(onBack = navController::navigateUp)
         }
         composable<AppDestination.GroupDetails> {
             PlaceholderScreen(title = "Group details", onBack = navController::navigateUp)

@@ -42,7 +42,7 @@ class HomeViewModel(
             userName = profile?.name.orEmpty(),
             owedToYou = summary.owedToYou,
             youOwe = summary.youOwe,
-            groups = groups.filterByName(query),
+            groups = groups.filterByName(query).take(MAX_RECENT_GROUPS),
             totalGroupCount = groups.size,
         )
     }.stateIn(
@@ -59,5 +59,10 @@ class HomeViewModel(
     private fun List<GroupSummary>.filterByName(query: String): List<GroupSummary> {
         val q = query.trim()
         return if (q.isEmpty()) this else filter { it.name.contains(q, ignoreCase = true) }
+    }
+
+    companion object {
+        /** Home shows only the latest few; the Groups tab lists them all. */
+        const val MAX_RECENT_GROUPS = 3
     }
 }

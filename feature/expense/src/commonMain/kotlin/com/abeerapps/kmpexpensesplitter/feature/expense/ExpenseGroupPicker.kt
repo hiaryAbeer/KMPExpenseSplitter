@@ -45,10 +45,6 @@ import com.abeerapps.kmpexpensesplitter.feature.expense.resources.expense_group_
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.expense_group_no_results
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.expense_group_search_placeholder
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.expense_group_sheet_title
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.new_expense_group_create
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.new_expense_group_name_label
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.new_expense_group_name_placeholder
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.new_expense_group_title
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -147,36 +143,6 @@ internal fun ExpenseGroupSheet(
             text = stringResource(Res.string.expense_group_add),
             onClick = onAdd,
             modifier = Modifier.padding(top = ExpenseSplitterTheme.spacing.sm).testTag(ExpenseGroupPickerTestTags.ADD),
-        )
-    }
-}
-
-/** "New expense group": just a name (prefilled from the search text). "Add" creates and selects it. */
-@Composable
-internal fun CreateExpenseGroupSheet(
-    form: NewExpenseGroupForm,
-    onNameChange: (String) -> Unit,
-    onCreate: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AppBottomSheet(stringResource(Res.string.new_expense_group_title), onDismiss) {
-        Column {
-            FieldLabel(stringResource(Res.string.new_expense_group_name_label))
-            Spacer(Modifier.height(ExpenseSplitterTheme.spacing.sm))
-            AppTextField(
-                value = form.name,
-                onValueChange = onNameChange,
-                placeholder = stringResource(Res.string.new_expense_group_name_placeholder),
-                leadingIcon = null,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { if (form.canCreate) onCreate() }),
-            )
-        }
-        PrimaryButton(
-            text = stringResource(Res.string.new_expense_group_create),
-            onClick = onCreate,
-            enabled = form.canCreate || form.isCreating,
-            isLoading = form.isCreating,
         )
     }
 }

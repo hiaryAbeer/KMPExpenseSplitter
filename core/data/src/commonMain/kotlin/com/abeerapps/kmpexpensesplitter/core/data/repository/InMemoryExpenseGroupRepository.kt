@@ -21,6 +21,14 @@ internal class InMemoryExpenseGroupRepository : ExpenseGroupRepository {
         groups.update { listOf(group) + it } // Newest first.
     }
 
+    override suspend fun updateExpenseGroup(group: ExpenseGroup) {
+        groups.update { all -> all.map { if (it.id == group.id) group else it } }
+    }
+
+    override suspend fun deleteExpenseGroup(groupId: String) {
+        groups.update { all -> all.filterNot { it.id == groupId } }
+    }
+
     /** Used by "Clear local data". */
     fun clear() {
         groups.value = emptyList()

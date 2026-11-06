@@ -56,6 +56,10 @@ import com.abeerapps.kmpexpensesplitter.core.designsystem.theme.ExpenseSplitterT
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
 import com.abeerapps.kmpexpensesplitter.core.domain.model.GroupSummary
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
+import com.abeerapps.kmpexpensesplitter.core.ui.GroupCard
+import com.abeerapps.kmpexpensesplitter.core.ui.format
+import com.abeerapps.kmpexpensesplitter.core.ui.resources.ic_empty_groups
+import com.abeerapps.kmpexpensesplitter.core.ui.resources.Res as UiRes
 import com.abeerapps.kmpexpensesplitter.feature.home.resources.Res
 import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_add_expense
 import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_empty_message
@@ -68,7 +72,7 @@ import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_recent_group
 import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_search_placeholder
 import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_you_are_owed
 import com.abeerapps.kmpexpensesplitter.feature.home.resources.home_you_owe
-import com.abeerapps.kmpexpensesplitter.feature.home.resources.ic_empty_groups
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -152,7 +156,7 @@ fun HomeContent(
                     when {
                         uiState.hasNoGroups -> CenteredInRemainingSpace {
                             EmptyState(
-                                icon = painterResource(Res.drawable.ic_empty_groups),
+                                icon = painterResource(UiRes.drawable.ic_empty_groups),
                                 title = stringResource(Res.string.home_empty_title),
                                 message = stringResource(Res.string.home_empty_message),
                                 modifier = Modifier.testTag(HomeTestTags.EMPTY_STATE),
@@ -327,7 +331,7 @@ private fun AddExpenseButton(onClick: () -> Unit, modifier: Modifier = Modifier)
 private val PreviewJod = CurrencyCode.of("JOD")!!
 
 private fun previewGroup(id: String, name: String, members: List<String>, total: Long, balance: Long) =
-    GroupSummary(id, name, members, Money(total, PreviewJod), Money(balance, PreviewJod))
+    GroupSummary(id, name, members, Money(total, PreviewJod), Money(balance, PreviewJod), LocalDate(2026, 4, 29))
 
 @Preview
 @Composable

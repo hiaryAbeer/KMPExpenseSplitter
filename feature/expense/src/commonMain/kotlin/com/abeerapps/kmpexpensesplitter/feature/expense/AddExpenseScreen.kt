@@ -46,6 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.AppTextField
+import com.abeerapps.kmpexpensesplitter.core.designsystem.component.AppTopBar
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.FieldLabel
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.PrimaryButton
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.Res as DsRes
@@ -56,6 +57,9 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
+import com.abeerapps.kmpexpensesplitter.core.ui.CreateExpenseGroupSheet
+import com.abeerapps.kmpexpensesplitter.core.ui.PeopleGroupSheet
+import com.abeerapps.kmpexpensesplitter.core.ui.PeopleGroupSheetCallbacks
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.Res
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_back
@@ -138,7 +142,11 @@ fun AddExpenseContent(
             .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
         Column(Modifier.fillMaxSize()) {
-            TopBar(onBack)
+            AppTopBar(
+                title = stringResource(Res.string.add_expense_title),
+                onBack = onBack,
+                backDescription = stringResource(Res.string.add_expense_back),
+            )
             if (!uiState.isLoading) {
                 Column(
                     modifier = Modifier
@@ -166,7 +174,9 @@ fun AddExpenseContent(
             onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
         )
         AddExpenseSheet.CreateExpenseGroup -> CreateExpenseGroupSheet(
-            form = uiState.newExpenseGroup,
+            name = uiState.newExpenseGroup.name,
+            canCreate = uiState.newExpenseGroup.canCreate,
+            isCreating = uiState.newExpenseGroup.isCreating,
             onNameChange = { onAction(AddExpenseAction.NewExpenseGroupNameChanged(it)) },
             onCreate = { onAction(AddExpenseAction.CreateExpenseGroupClicked) },
             onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
@@ -178,11 +188,18 @@ fun AddExpenseContent(
             onAddGroup = { onAction(AddExpenseAction.AddGroupClicked) },
             onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
         )
-        AddExpenseSheet.CreateGroup -> CreateGroupSheet(
+        AddExpenseSheet.CreateGroup -> PeopleGroupSheet(
             form = uiState.newGroup,
             yourName = uiState.you?.name.orEmpty(),
-            onAction = onAction,
-            onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
+            callbacks = PeopleGroupSheetCallbacks(
+                onNameChange = { onAction(AddExpenseAction.NewGroupNameChanged(it)) },
+                onMemberInputChange = { onAction(AddExpenseAction.MemberInputChanged(it)) },
+                onAddMember = { onAction(AddExpenseAction.AddMemberClicked) },
+                onRemoveMember = { onAction(AddExpenseAction.MemberRemoved(it)) },
+                onRemoveYou = { onAction(AddExpenseAction.YouRemoved) },
+                onSave = { onAction(AddExpenseAction.CreateGroupClicked) },
+                onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
+            ),
         )
         AddExpenseSheet.PaidBy -> PaidBySheet(
             participants = uiState.payerOptions,
@@ -198,45 +215,6 @@ fun AddExpenseContent(
             onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
         )
         null -> Unit
-    }
-}
-
-/** Back arrow + title, with the design's hairline under it. */
-@Composable
-private fun TopBar(onBack: () -> Unit) {
-    val divider = MaterialTheme.colorScheme.outlineVariant
-    val hairline = ExpenseSplitterTheme.borders.hairline
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .drawBehind {
-                val y = size.height - hairline.toPx() / 2
-                drawLine(divider, Offset(0f, y), Offset(size.width, y), hairline.toPx())
-            }
-            .padding(ExpenseSplitterTheme.spacing.smd),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // 48dp touch target around the 24dp arrow: arrow 24dp from the edge, bar 72dp tall, as designed.
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onBack, role = Role.Button),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(DsRes.drawable.ic_arrow_left),
-                contentDescription = stringResource(Res.string.add_expense_back),
-                tint = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.size(24.dp),
-            )
-        }
-        Text(
-            text = stringResource(Res.string.add_expense_title),
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = ExpenseSplitterTheme.spacing.sm).semantics { heading() },
-        )
     }
 }
 

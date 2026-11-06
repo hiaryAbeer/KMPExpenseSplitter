@@ -1,4 +1,4 @@
-package com.abeerapps.kmpexpensesplitter.feature.home
+package com.abeerapps.kmpexpensesplitter.core.ui
 
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money

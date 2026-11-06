@@ -100,7 +100,7 @@ class ExpenseGroupUseCasesTest {
         val summary = ObserveGroupsUseCase(trips, people, expenses, profiles)().first().single()
 
         assertEquals(
-            GroupSummary("trip", "Aqaba Trip", listOf("Ahmad", "Sara", "Omar"), Money(40_00, jod), Money(5_00, jod)),
+            GroupSummary("trip", "Aqaba Trip", listOf("Ahmad", "Sara", "Omar"), Money(40_00, jod), Money(5_00, jod), today),
             summary,
         )
     }

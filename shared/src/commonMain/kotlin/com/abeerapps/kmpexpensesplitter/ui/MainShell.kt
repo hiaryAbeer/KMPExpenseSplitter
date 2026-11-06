@@ -18,6 +18,7 @@ import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.Res as DsRes
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_home
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_settings
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_users
+import com.abeerapps.kmpexpensesplitter.feature.groups.GroupsScreen
 import com.abeerapps.kmpexpensesplitter.feature.home.HomeScreen
 import com.abeerapps.kmpexpensesplitter.feature.settings.SettingsScreen
 import com.abeerapps.kmpexpensesplitter.resources.Res
@@ -32,13 +33,15 @@ private enum class MainTab { Home, Groups, Settings }
 
 /**
  * Main app shell after registration: the design's bottom navigation with
- * Home, Groups and Settings. Groups is a placeholder for now.
+ * Home, Groups and Settings.
  *
  * The selected tab survives rotation and process death (rememberSaveable).
  */
 @Composable
 internal fun MainShell(
     onAddExpense: () -> Unit,
+    onManageExpenseGroups: () -> Unit,
+    onManagePeopleGroups: () -> Unit,
     onGroupClick: (groupId: String) -> Unit,
     onDataCleared: () -> Unit,
 ) {
@@ -60,7 +63,12 @@ internal fun MainShell(
         Box(Modifier.fillMaxSize().padding(innerPadding)) {
             when (MainTab.entries[selected]) {
                 MainTab.Home -> HomeScreen(onAddExpense = onAddExpense, onGroupClick = onGroupClick)
-                MainTab.Groups -> PlaceholderScreen(title = "Groups")
+                MainTab.Groups -> GroupsScreen(
+                    onGroupClick = onGroupClick,
+                    onAddExpense = onAddExpense,
+                    onManageExpenseGroups = onManageExpenseGroups,
+                    onManagePeopleGroups = onManagePeopleGroups,
+                )
                 MainTab.Settings -> SettingsScreen(onDataCleared = onDataCleared)
             }
         }

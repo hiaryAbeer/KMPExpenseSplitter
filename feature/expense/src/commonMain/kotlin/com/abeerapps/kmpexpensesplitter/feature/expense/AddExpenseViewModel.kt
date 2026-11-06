@@ -22,6 +22,8 @@ import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ExpenseDraft
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObservePeopleGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveUserProfileUseCase
+import com.abeerapps.kmpexpensesplitter.core.ui.PeopleGroupForm
+import com.abeerapps.kmpexpensesplitter.core.ui.PeopleGroupFormEditor
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -129,17 +131,14 @@ class AddExpenseViewModel(
                 (if (group == null || group.id == state.groupId) state else state.withGroup(group)).copy(openSheet = null)
             }
             AddExpenseAction.AddGroupClicked ->
-                _uiState.update { it.copy(openSheet = AddExpenseSheet.CreateGroup, newGroup = NewGroupForm()) }
-            is AddExpenseAction.NewGroupNameChanged ->
-                if (action.value.length <= PeopleGroup.MAX_NAME_LENGTH) updateNewGroup { it.copy(name = action.value) }
+                _uiState.update { it.copy(openSheet = AddExpenseSheet.CreateGroup, newGroup = PeopleGroupForm()) }
+            is AddExpenseAction.NewGroupNameChanged -> updateNewGroup { form, you -> PeopleGroupFormEditor.nameChanged(form, action.value, you) }
             is AddExpenseAction.MemberInputChanged ->
-                if (action.value.length <= PeopleGroup.MAX_MEMBER_NAME_LENGTH) {
-                    updateNewGroup { it.copy(memberInput = action.value, memberError = null) }
-                }
-            AddExpenseAction.AddMemberClicked -> addTypedMember()
+                updateNewGroup { form, you -> PeopleGroupFormEditor.memberInputChanged(form, action.value, you) }
+            AddExpenseAction.AddMemberClicked -> updateNewGroup { form, you -> PeopleGroupFormEditor.addMember(form, you) }
             is AddExpenseAction.MemberRemoved ->
-                updateNewGroup { form -> form.copy(members = form.members.filterIndexed { i, _ -> i != action.index }) }
-            AddExpenseAction.YouRemoved -> updateNewGroup { it.copy(includeYou = false) }
+                updateNewGroup { form, you -> PeopleGroupFormEditor.removeMember(form, action.index, you) }
+            AddExpenseAction.YouRemoved -> updateNewGroup { form, you -> PeopleGroupFormEditor.removeYou(form, you) }
             AddExpenseAction.CreateGroupClicked -> createNewGroup()
             is AddExpenseAction.AmountChanged ->
                 DecimalInput.sanitize(action.value)?.let { amount -> updateForm { it.copy(amount = amount) } }
@@ -197,71 +196,33 @@ class AddExpenseViewModel(
         }
     }
 
-    // region People group creation
-
-    private fun addTypedMember() {
-        val state = _uiState.value
-        val form = state.newGroup
-        if (!form.includeYou && state.isYourName(form.memberInput)) {
-            // Typing your own name after removing yourself adds *you* back, not a namesake.
-            updateNewGroup { it.copy(includeYou = true, memberInput = "", memberError = null) }
-            return
-        }
-        val error = createGroup.validateMemberName(form.memberInput, form.members, state.yourNameInNewGroup())
-        updateNewGroup {
-            if (error != null) it.copy(memberError = error)
-            else it.copy(members = it.members + it.memberInput.trim(), memberInput = "", memberError = null)
-        }
-    }
-
-    private fun AddExpenseUiState.isYourName(name: String): Boolean =
-        you != null && name.trim().equals(you.name.trim(), ignoreCase = true)
-
-    /** Your name while you're in the new group, else `null` (as the domain rules expect). */
-    private fun AddExpenseUiState.yourNameInNewGroup(): String? = you?.name?.takeIf { newGroup.includeYou }
-
-    /** Whether you'll be in the group: the toggle, or your own name still typed in the input. */
-    private fun AddExpenseUiState.candidateIncludesYou(): Boolean =
-        newGroup.includeYou || isYourName(newGroup.memberInput)
-
-    /** The other members to create the group with: the list plus a valid name still in the input. */
-    private fun AddExpenseUiState.candidateMembers(): List<String> {
-        val form = newGroup
-        val pending = form.memberInput.trim()
-        val pendingIsValid = pending.isNotEmpty() && !(!form.includeYou && isYourName(pending)) &&
-            createGroup.validateMemberName(pending, form.members, yourNameInNewGroup()) == null
-        return if (pendingIsValid) form.members + pending else form.members
-    }
+    // region People group creation (rules shared with "Manage people groups" via PeopleGroupFormEditor)
 
     private fun createNewGroup() {
         val state = _uiState.value
-        if (!state.newGroup.canCreate || state.newGroup.isCreating) return
-        val members = state.candidateMembers()
-        val includeYou = state.candidateIncludesYou()
-        updateNewGroup { it.copy(isCreating = true) }
+        val form = state.newGroup
+        if (!form.canSave || form.isSaving) return
+        val yourName = state.you?.name
+        val members = PeopleGroupFormEditor.candidateMembers(form, yourName).map { it.name }
+        val includeYou = PeopleGroupFormEditor.candidateIncludesYou(form, yourName)
+        _uiState.update { it.copy(newGroup = form.copy(isSaving = true)) }
         viewModelScope.launch {
-            when (val result = createGroup(state.newGroup.name, members, includeYou)) {
+            when (val result = createGroup(form.name, members, includeYou)) {
                 is CreatePeopleGroupResult.Success -> updateForm { current ->
                     val created = result.group
                     val groups = if (current.groups.any { it.id == created.id }) current.groups else listOf(created) + current.groups
-                    current.copy(groups = groups, openSheet = null, newGroup = NewGroupForm()).withGroup(created)
+                    current.copy(groups = groups, openSheet = null, newGroup = PeopleGroupForm()).withGroup(created)
                 }
                 is CreatePeopleGroupResult.Invalid, CreatePeopleGroupResult.NoProfile, CreatePeopleGroupResult.StorageError ->
                     _uiState.update {
-                        it.copy(newGroup = it.newGroup.copy(isCreating = false), message = AddExpenseMessage.CreateGroupFailed)
+                        it.copy(newGroup = it.newGroup.copy(isSaving = false), message = AddExpenseMessage.CreateGroupFailed)
                     }
             }
         }
     }
 
-    private fun updateNewGroup(transform: (NewGroupForm) -> NewGroupForm) {
-        _uiState.update { state ->
-            val form = transform(state.newGroup)
-            val withForm = state.copy(newGroup = form)
-            val yourName = state.you?.name?.takeIf { withForm.candidateIncludesYou() }
-            val canCreate = createGroup.validate(form.name, withForm.candidateMembers(), yourName).isEmpty()
-            withForm.copy(newGroup = form.copy(canCreate = canCreate))
-        }
+    private fun updateNewGroup(transform: (PeopleGroupForm, yourName: String?) -> PeopleGroupForm) {
+        _uiState.update { state -> state.copy(newGroup = transform(state.newGroup, state.you?.name)) }
     }
 
     // endregion

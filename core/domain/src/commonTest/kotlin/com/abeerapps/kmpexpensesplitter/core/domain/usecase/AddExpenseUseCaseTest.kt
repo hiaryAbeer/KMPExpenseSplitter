@@ -131,6 +131,7 @@ class AddExpenseUseCaseTest {
     }
 
     private class FakeExpenseRepository : ExpenseRepository {
+        override suspend fun deleteExpensesIn(expenseGroupId: String) = Unit
         val stored = mutableListOf<Expense>()
         var failNext = false
         override fun observeExpenses(): Flow<List<Expense>> = MutableStateFlow(stored.toList())

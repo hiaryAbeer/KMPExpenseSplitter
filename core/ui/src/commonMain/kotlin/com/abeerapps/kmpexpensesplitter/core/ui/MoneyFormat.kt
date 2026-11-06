@@ -1,4 +1,4 @@
-package com.abeerapps.kmpexpensesplitter.feature.home
+package com.abeerapps.kmpexpensesplitter.core.ui
 
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
 import kotlin.math.absoluteValue
@@ -10,7 +10,7 @@ import kotlin.math.absoluteValue
  * Kept in common code (no platform NumberFormat) so Android and iOS render
  * identical strings; swap for locale-aware formatting when the app is localized.
  */
-internal fun Money.format(showSign: Boolean = false): String {
+fun Money.format(showSign: Boolean = false): String {
     val abs = minorUnits.absoluteValue
     val whole = abs / Money.SCALE
     val fraction = (abs % Money.SCALE).toString().padStart(2, '0')

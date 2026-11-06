@@ -25,7 +25,6 @@ import com.abeerapps.kmpexpensesplitter.core.designsystem.component.AppBottomShe
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.AppTextField
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.DestructiveButton
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.PrimaryButton
-import com.abeerapps.kmpexpensesplitter.core.designsystem.component.TertiaryButton
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.Res as DsRes
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_user
 import com.abeerapps.kmpexpensesplitter.core.designsystem.theme.ExpenseSplitterTheme
@@ -38,7 +37,6 @@ import com.abeerapps.kmpexpensesplitter.feature.settings.resources.settings_abou
 import com.abeerapps.kmpexpensesplitter.feature.settings.resources.settings_about_feature_currencies
 import com.abeerapps.kmpexpensesplitter.feature.settings.resources.settings_about_feature_groups
 import com.abeerapps.kmpexpensesplitter.feature.settings.resources.settings_about_feature_privacy
-import com.abeerapps.kmpexpensesplitter.feature.settings.resources.settings_cancel
 import com.abeerapps.kmpexpensesplitter.feature.settings.resources.settings_clear_confirm
 import com.abeerapps.kmpexpensesplitter.feature.settings.resources.settings_clear_sheet_message
 import com.abeerapps.kmpexpensesplitter.feature.settings.resources.settings_clear_sheet_title
@@ -89,7 +87,6 @@ internal fun SettingsSheets(
                 onClick = { onAction(SettingsAction.ConfirmClearClicked) },
                 isLoading = uiState.isWorking,
             )
-            TertiaryButton(text = stringResource(Res.string.settings_cancel), onClick = dismiss)
         }
         SettingsSheet.About -> AboutSheet(uiState.versionName, dismiss)
     }

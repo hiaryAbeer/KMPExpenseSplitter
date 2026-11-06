@@ -11,4 +11,10 @@ interface ExpenseGroupRepository {
 
     /** Stores [group]. Throws on storage failure. */
     suspend fun createExpenseGroup(group: ExpenseGroup)
+
+    /** Replaces the expense group with [group]'s id. Throws on storage failure. */
+    suspend fun updateExpenseGroup(group: ExpenseGroup)
+
+    /** Removes the expense group with [groupId], if present. Throws on storage failure. */
+    suspend fun deleteExpenseGroup(groupId: String)
 }

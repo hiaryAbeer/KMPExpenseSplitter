@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="groups_title">Groups</string>
+    <string name="groups_manage_expense_groups">Manage expense groups</string>
+    <string name="groups_manage_people_groups">Manage people groups</string>
+    <string name="groups_search_placeholder">Search groups</string>
+    <string name="groups_filter_all">All</string>
+    <string name="groups_filter_you_owe">You owe</string>
+    <string name="groups_filter_you_are_owed">You are owed</string>
+    <string name="groups_filter_settled">Settled</string>
+    <string name="groups_filter_recent">Recently active</string>
+    <string name="groups_empty_title">No groups yet</string>
+    <string name="groups_empty_message">Create a group to start tracking shared expenses.</string>
+    <string name="groups_no_results_title">No groups found</string>
+    <!-- %1$s = search text -->
+    <string name="groups_no_results_query">No group matches “%1$s”.</string>
+    <!-- %1$s = filter name, e.g. You owe -->
+    <string name="groups_no_results_filter">No groups in “%1$s”.</string>
+    <string name="groups_add_expense">Add expense</string>
+
+    <!-- Manage expense groups / people groups -->
+    <string name="manage_back">Back</string>
+    <string name="manage_expense_groups_title">Expense groups</string>
+    <string name="manage_people_groups_title">People groups</string>
+    <string name="manage_search_expense_groups">Search expense groups</string>
+    <string name="manage_search_people_groups">Search people groups</string>
+    <string name="manage_add_expense_group">Add expense group</string>
+    <string name="manage_add_people_group">Add people group</string>
+    <plurals name="manage_expense_count">
+        <item quantity="one">%1$d expense</item>
+        <item quantity="other">%1$d expenses</item>
+    </plurals>
+    <string name="manage_used_in_expenses">Used in expenses</string>
+    <!-- %1$s = group name -->
+    <string name="manage_edit">Edit %1$s</string>
+    <string name="manage_delete">Delete %1$s</string>
+    <string name="manage_delete_disabled">%1$s is used in expenses and can’t be deleted</string>
+    <string name="manage_delete_title">Delete “%1$s”?</string>
+    <plurals name="manage_delete_expense_group_message">
+        <item quantity="one">Its %1$d expense will be deleted too. This can’t be undone.</item>
+        <item quantity="other">Its %1$d expenses will be deleted too. This can’t be undone.</item>
+    </plurals>
+    <string name="manage_delete_message">This can’t be undone.</string>
+    <string name="manage_delete_confirm">Delete</string>
+    <string name="manage_empty_expense_groups_title">No expense groups yet</string>
+    <string name="manage_empty_expense_groups_message">Add one, e.g. a trip, to collect its expenses.</string>
+    <string name="manage_empty_people_groups_title">No people groups yet</string>
+    <string name="manage_empty_people_groups_message">Add the people you share expenses with.</string>
+    <!-- %1$s = search text -->
+    <string name="manage_no_results">No match for “%1$s”.</string>
+    <string name="manage_save_failed">Couldn’t save. Please try again.</string>
+    <string name="manage_delete_failed">Couldn’t delete. Please try again.</string>
+    <string name="manage_member_in_use">People used in expenses can’t be removed.</string>
+</resources>

@@ -20,6 +20,12 @@ class FakePeopleGroupRepository(initial: List<PeopleGroup> = emptyList()) : Peop
         }
         groups.value = listOf(group) + groups.value
     }
+    override suspend fun updateGroup(group: PeopleGroup) {
+        groups.value = groups.value.map { if (it.id == group.id) group else it }
+    }
+    override suspend fun deleteGroup(groupId: String) {
+        groups.value = groups.value.filterNot { it.id == groupId }
+    }
 }
 
 class FakeExpenseRepository(initial: List<Expense> = emptyList()) : ExpenseRepository {
@@ -27,6 +33,9 @@ class FakeExpenseRepository(initial: List<Expense> = emptyList()) : ExpenseRepos
     override fun observeExpenses(): Flow<List<Expense>> = expenses
     override suspend fun addExpense(expense: Expense) {
         expenses.value = listOf(expense) + expenses.value
+    }
+    override suspend fun deleteExpensesIn(expenseGroupId: String) {
+        expenses.value = expenses.value.filterNot { it.expenseGroupId == expenseGroupId }
     }
 }
 
@@ -40,5 +49,11 @@ class FakeExpenseGroupRepository(initial: List<ExpenseGroup> = emptyList()) : Ex
             error("disk full")
         }
         groups.value = listOf(group) + groups.value
+    }
+    override suspend fun updateExpenseGroup(group: ExpenseGroup) {
+        groups.value = groups.value.map { if (it.id == group.id) group else it }
+    }
+    override suspend fun deleteExpenseGroup(groupId: String) {
+        groups.value = groups.value.filterNot { it.id == groupId }
     }
 }

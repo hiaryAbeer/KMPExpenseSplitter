@@ -6,4 +6,29 @@
     <string name="currency_search_placeholder">Search by name or code</string>
     <!-- %1$s = what the user typed -->
     <string name="currency_no_results">No currencies match “%1$s”</string>
+    <!-- %1$s = group name, %2$s = your balance, %3$s = total spent -->
+    <string name="group_card_description">%1$s. Your balance %2$s. Total %3$s</string>
+    <string name="new_expense_group_title">New expense group</string>
+    <string name="new_expense_group_name_label">Name</string>
+    <string name="new_expense_group_name_placeholder">e.g. Aqaba Trip</string>
+    <string name="new_expense_group_create">Add</string>
+    <string name="new_group_title">New people group</string>
+    <string name="new_group_name_label">Group name</string>
+    <string name="new_group_name_placeholder">e.g. Aqaba Trip</string>
+    <string name="new_group_members_label">Members</string>
+    <string name="new_group_member_placeholder">Member name</string>
+    <string name="new_group_add_member">Add member</string>
+    <!-- %1$s = member name -->
+    <string name="new_group_remove_member">Remove %1$s</string>
+    <!-- %1$s = your name -->
+    <string name="new_group_you">%1$s (you)</string>
+    <string name="new_group_member_blank">Enter a name.</string>
+    <string name="new_group_member_too_long">Names can be up to 50 characters.</string>
+    <string name="new_group_member_duplicate">This person is already in the group.</string>
+    <string name="new_group_member_too_many">A group can have up to 20 other members.</string>
+    <string name="new_group_create">Add</string>
+    <string name="edit_people_group_title">Edit people group</string>
+    <string name="people_group_member_in_use">In expenses</string>
+    <string name="group_save">Save</string>
+    <string name="edit_expense_group_title">Edit expense group</string>
 </resources>

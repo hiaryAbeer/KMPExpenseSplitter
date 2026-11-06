@@ -10,8 +10,8 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitError
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SupportedCurrencies
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ExpenseDraftError
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.MemberNameError
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseGroupsUseCase
+import com.abeerapps.kmpexpensesplitter.core.ui.PeopleGroupForm
 import kotlinx.datetime.LocalDate
 
 /** Bottom sheets / dialogs the screen can show. */
@@ -30,23 +30,6 @@ data class NewExpenseGroupForm(
     val isCreating: Boolean = false,
 )
 
-/**
- * The "Add group" form inside the group sheet.
- *
- * @property includeYou whether you are in the group (on by default; removable like anyone else).
- * @property members other people's names.
- * @property memberInput the name being typed, added with the "+" button.
- */
-@Immutable
-data class NewGroupForm(
-    val name: String = "",
-    val includeYou: Boolean = true,
-    val memberInput: String = "",
-    val members: List<String> = emptyList(),
-    val memberError: MemberNameError? = null,
-    val canCreate: Boolean = false,
-    val isCreating: Boolean = false,
-)
 
 /**
  * Everything "Add Expense" renders. Text fields hold exactly what the user typed;
@@ -86,7 +69,8 @@ data class AddExpenseUiState(
     val selected: Set<String> = emptySet(),
     val shareInputs: Map<SplitType, Map<String, String>> = emptyMap(),
     val note: String = "",
-    val newGroup: NewGroupForm = NewGroupForm(),
+    /** The "Add group" form inside the people group sheet (shared with "Manage people groups"). */
+    val newGroup: PeopleGroupForm = PeopleGroupForm(),
     val openSheet: AddExpenseSheet? = null,
     val isSaving: Boolean = false,
     val errors: List<ExpenseDraftError> = emptyList(),

@@ -11,4 +11,10 @@ interface PeopleGroupRepository {
 
     /** Stores [group]. Throws on storage failure. */
     suspend fun createGroup(group: PeopleGroup)
+
+    /** Replaces the group with [group]'s id. Throws on storage failure. */
+    suspend fun updateGroup(group: PeopleGroup)
+
+    /** Removes the group with [groupId], if present. Throws on storage failure. */
+    suspend fun deleteGroup(groupId: String)
 }

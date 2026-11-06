@@ -25,8 +25,8 @@ androidApp (Android entry)      iosApp (Swift entry, Xcode)
 | `:core:domain` | `UserProfile`, `CurrencyCode`, `SupportedCurrencies`, `Expense`, `SplitCalculator`, repository interfaces, use cases, `FeatureFlags` | coroutines, kotlinx-datetime |
 | `:core:data` | Repository implementations, persistence, platform file paths (`expect/actual`), Koin `dataModule` | domain |
 | `:core:designsystem` | Theme from the Figma tokens (colors, type, 16dp shapes, spacing), shared icons, components (`PrimaryButton`, `AppTextField`, `AppCard`, `EmptyState`, `AppNavigationBar`), `ObserveAsEvents` | Compose |
-| `:core:ui` | Compose UI that knows domain types and is shared by features (currency picker sheet) | domain, designsystem |
-| `:feature:*` | One user-facing feature: screen + ViewModel + Koin module (`onboarding`, `registration`, `home`, `settings`, `expense`) | domain, designsystem, ui (**never** data or other features) |
+| `:core:ui` | Compose UI that knows domain types and is shared by features (currency picker, group card, money format, expense/people group sheets and form state) | domain, designsystem |
+| `:feature:*` | One user-facing feature: screen + ViewModel + Koin module (`onboarding`, `registration`, `home`, `groups`, `settings`, `expense`) | domain, designsystem, ui (**never** data or other features) |
 | `:shared` | Wires everything: `initKoin`, `AppNavHost`, `AppViewModel` (start destination), `Shared.framework` | everything |
 
 **Presentation pattern (UDF/MVI-lite)**: each screen has `UiState` (`StateFlow`), `Action`s from the UI,
@@ -64,7 +64,8 @@ After registration the app opens the main shell: bottom navigation with **Home**
 **Settings** (Groups/Settings are placeholders). Home shows the greeting with the registered name,
 "You are owed" / "You owe" totals in the default currency, group search, and **Recent Groups**.
 
-**Recent Groups are expense groups** (e.g. a trip). Their cards are computed by
+**Recent Groups are expense groups** (e.g. a trip); Home shows the **3** most recently active (the
+header still counts all of them), the Groups tab lists every one. Their cards are computed by
 `ObserveGroupsUseCase` from each expense group's expenses (`GroupSummaries.build`): the people
 involved (from the people groups its expenses used), total spent, and your balance = what you paid −
 your shares. Ordered by latest activity. With no groups, Home shows the generic `EmptyState` ("No groups yet",
@@ -73,6 +74,32 @@ no button). The "+" button opens **Add Expense**, where groups are created.
 Money is stored as integer hundredths (`Money.minorUnits`) and always shown with two decimals,
 as in the design. Totals only include groups in the user's default currency until currency
 conversion exists.
+
+## Groups tab
+
+`:feature:groups`: title with two icons (**manage expense groups**, **manage people groups**), a
+search field (matches the expense group name), filter chips and the list of every expense group
+(`GroupCard` from `:core:ui`).
+
+- **Filters** (domain: `filterGroups`): All, You owe (balance < 0), You are owed (> 0), Settled
+  (= 0, including groups without expenses), Recently active (activity in the last 30 days).
+- **Empty**: "No groups yet" (no button: expense groups are created from Add Expense). When groups
+  exist but none match: "No groups found".
+- The "+" button opens Add Expense, as on Home.
+
+### Manage expense groups / people groups
+
+Opened from the Groups tab header. Each has a search field, the list with **edit** and **delete**
+per item, and an **Add** button. Add/Edit use the same sheets as Add Expense
+(`CreateExpenseGroupSheet`, `PeopleGroupSheet` in `:core:ui`).
+
+- **Expense groups**: rename keeps the id. Delete asks for confirmation and also deletes the group's
+  expenses ("Its 2 expenses will be deleted too").
+- **People groups**: search matches group or member names. **Delete is enabled only for groups no
+  expense uses.** When editing, people referenced by an expense (payer or share) show "In expenses"
+  and can't be removed; anyone else can be added or removed.
+- One set of people group rules for create and edit: `PeopleGroupRules` (domain) and
+  `PeopleGroupFormEditor` (shared form state in `:core:ui`, used by Add Expense too).
 
 ## Add Expense
 
