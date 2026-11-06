@@ -1,14 +1,14 @@
 package com.abeerapps.kmpexpensesplitter.core.domain.repository
 
-import com.abeerapps.kmpexpensesplitter.core.domain.model.Group
+import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
 import kotlinx.coroutines.flow.Flow
 
 /** Source of truth for the user's groups. Implemented in `:core:data`. */
-interface GroupRepository {
+interface PeopleGroupRepository {
 
     /** Emits every group, newest first; re-emits on change. */
-    fun observeGroups(): Flow<List<Group>>
+    fun observeGroups(): Flow<List<PeopleGroup>>
 
     /** Stores [group]. Throws on storage failure. */
-    suspend fun createGroup(group: Group)
+    suspend fun createGroup(group: PeopleGroup)
 }

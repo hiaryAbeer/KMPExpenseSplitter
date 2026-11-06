@@ -50,13 +50,13 @@ class LocalSettingsDataSourcesTest {
         prefs.setTheme(ThemePreference.Dark)
         expenses.addExpense(
             Expense(
-                id = "1", groupId = "g1", title = "Lunch", amount = Money(10_00, jod), category = ExpenseCategory.Food,
+                id = "1", expenseGroupId = "t1", peopleGroupId = "g1", title = "Lunch", amount = Money(10_00, jod), category = ExpenseCategory.Food,
                 paidBy = "you", splitType = SplitType.Equal, shares = listOf(ExpenseShare("you", Money(10_00, jod))),
-                date = LocalDate(2026, 4, 29), note = null,
+                startDate = LocalDate(2026, 4, 29), endDate = LocalDate(2026, 4, 29), note = null,
             ),
         )
 
-        DeviceLocalDataCleaner(store, InMemoryGroupRepository(), expenses).clearAll()
+        DeviceLocalDataCleaner(store, InMemoryExpenseGroupRepository(), InMemoryPeopleGroupRepository(), expenses).clearAll()
 
         assertNull(profiles.observeProfile().first())
         assertEquals(ThemePreference.System, prefs.observeTheme().first())

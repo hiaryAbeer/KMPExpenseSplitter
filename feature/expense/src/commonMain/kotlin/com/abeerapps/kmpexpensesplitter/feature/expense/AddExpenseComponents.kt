@@ -21,8 +21,8 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,8 +30,9 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberDateRangePickerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.AppBottomSheet
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.AppCard
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.InitialAvatar
+import com.abeerapps.kmpexpensesplitter.core.designsystem.component.PrimaryButton
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.Res as DsRes
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_calendar
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_check
@@ -70,8 +72,9 @@ import com.abeerapps.kmpexpensesplitter.feature.expense.resources.category_food
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.category_hotel
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.category_shopping
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.category_transport
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.date_picker_cancel
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.date_picker_confirm
+import com.abeerapps.kmpexpensesplitter.feature.expense.resources.date_sheet_done
+import com.abeerapps.kmpexpensesplitter.feature.expense.resources.date_sheet_hint
+import com.abeerapps.kmpexpensesplitter.feature.expense.resources.date_sheet_title
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.date_today
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.date_yesterday
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.ic_category_bills
@@ -406,9 +409,9 @@ private fun ShareInput(
     }
 }
 
-/** "Today, April 29, 2026" card; opens the date picker on tap. */
+/** "Today, April 29, 2026" or "April 27 – April 29, 2026" card; opens the calendar sheet on tap. */
 @Composable
-internal fun DateCard(date: LocalDate, today: LocalDate, onClick: () -> Unit) {
+internal fun DateCard(start: LocalDate, end: LocalDate, today: LocalDate, onClick: () -> Unit) {
     AppCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -424,7 +427,7 @@ internal fun DateCard(date: LocalDate, today: LocalDate, onClick: () -> Unit) {
             )
             Spacer(Modifier.width(ExpenseSplitterTheme.spacing.smd))
             Text(
-                text = formatExpenseDate(date, today),
+                text = formatExpenseDates(start, end, today),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -470,13 +473,17 @@ internal fun PaidBySheet(
     }
 }
 
-/** Material date picker limited to today and earlier (expenses can't be in the future). */
+/**
+ * Calendar sheet for the expense's dates, limited to today and earlier.
+ * First tap: a one-day expense (start = end). Second tap: the end date.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ExpenseDatePicker(
-    date: LocalDate,
+internal fun ExpenseDateRangeSheet(
+    start: LocalDate,
+    end: LocalDate,
     today: LocalDate,
-    onSelect: (LocalDate) -> Unit,
+    onSelect: (start: LocalDate, end: LocalDate?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val todayMillis = today.toUtcMillis()
@@ -486,30 +493,75 @@ internal fun ExpenseDatePicker(
             override fun isSelectableYear(year: Int) = year <= today.year
         }
     }
-    val state = rememberDatePickerState(
-        initialSelectedDateMillis = date.toUtcMillis(),
+    val state = rememberDateRangePickerState(
+        initialSelectedStartDateMillis = start.toUtcMillis(),
+        // A one-day range is shown as a single selected day.
+        initialSelectedEndDateMillis = if (end != start) end.toUtcMillis() else null,
         selectableDates = selectableDates,
     )
-    DatePickerDialog(
+    // Brand teal for the in-between days (Material's default is the coral secondary container).
+    val pickerColors = DatePickerDefaults.colors(
+        containerColor = MaterialTheme.colorScheme.surface,
+        dayInSelectionRangeContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+        dayInSelectionRangeContentColor = MaterialTheme.colorScheme.onSurface,
+    )
+    val spacing = ExpenseSplitterTheme.spacing
+
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                state.selectedDateMillis?.let { onSelect(LocalDate.fromEpochDays(it / MILLIS_PER_DAY)) } ?: onDismiss()
-            }) { Text(stringResource(Res.string.date_picker_confirm)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.date_picker_cancel)) }
-        },
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        DatePicker(state = state)
+        Column(Modifier.fillMaxWidth().fillMaxHeight(0.85f)) {
+            DateRangePicker(
+                state = state,
+                modifier = Modifier.weight(1f),
+                title = {
+                    Text(
+                        text = stringResource(Res.string.date_sheet_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(horizontal = spacing.screenHorizontal),
+                    )
+                },
+                headline = {
+                    Text(
+                        text = stringResource(Res.string.date_sheet_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = spacing.screenHorizontal, vertical = spacing.sm),
+                    )
+                },
+                showModeToggle = false,
+                colors = pickerColors,
+            )
+            PrimaryButton(
+                text = stringResource(Res.string.date_sheet_done),
+                onClick = {
+                    val first = state.selectedStartDateMillis
+                    if (first == null) onDismiss()
+                    else onSelect(first.toLocalDate(), state.selectedEndDateMillis?.toLocalDate())
+                },
+                modifier = Modifier.padding(horizontal = spacing.screenHorizontal, vertical = spacing.md),
+            )
+        }
     }
 }
 
-/** "Today, April 29, 2026" / "Yesterday, …" / "April 12, 2026". English month names for now. */
+/**
+ * "Today, April 29, 2026" / "Yesterday, …" / "April 12, 2026" for one day;
+ * "April 27 – April 29, 2026" (or with both years when they differ) for a range.
+ * English month names for now.
+ */
 @Composable
-private fun formatExpenseDate(date: LocalDate, today: LocalDate): String {
-    val full = "${MonthNames.ENGLISH_FULL.names[date.month.ordinal]} ${date.day}, ${date.year}"
-    return when (date) {
+private fun formatExpenseDates(start: LocalDate, end: LocalDate, today: LocalDate): String {
+    fun monthDay(date: LocalDate) = "${MonthNames.ENGLISH_FULL.names[date.month.ordinal]} ${date.day}"
+    if (start != end) {
+        val from = if (start.year == end.year) monthDay(start) else "${monthDay(start)}, ${start.year}"
+        return "$from – ${monthDay(end)}, ${end.year}"
+    }
+    val full = "${monthDay(start)}, ${start.year}"
+    return when (start) {
         today -> stringResource(Res.string.date_today, full)
         today.minus(DatePeriod(days = 1)) -> stringResource(Res.string.date_yesterday, full)
         else -> full
@@ -520,6 +572,8 @@ private fun formatExpenseDate(date: LocalDate, today: LocalDate): String {
 private const val MILLIS_PER_DAY = 86_400_000L
 
 private fun LocalDate.toUtcMillis(): Long = toEpochDays() * MILLIS_PER_DAY
+
+private fun Long.toLocalDate(): LocalDate = LocalDate.fromEpochDays(this / MILLIS_PER_DAY)
 
 private val ExpenseCategory.icon: DrawableResource
     get() = when (this) {

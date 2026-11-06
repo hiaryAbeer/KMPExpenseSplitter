@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 /**
- * Temporary [ExpenseRepository], like [InMemoryGroupRepository]: expenses live
+ * Temporary [ExpenseRepository], like [InMemoryPeopleGroupRepository]: expenses live
  * for the app session only. Replace the binding in `dataModule` with a database
  * implementation together with groups; nothing above the data layer changes.
  */
@@ -19,7 +19,7 @@ internal class InMemoryExpenseRepository : ExpenseRepository {
 
     override suspend fun addExpense(expense: Expense) {
         // Newest date first; same-day expenses keep most-recently-added first.
-        expenses.update { current -> (listOf(expense) + current).sortedByDescending { it.date } }
+        expenses.update { current -> (listOf(expense) + current).sortedByDescending { it.startDate } }
     }
 
     /** Used by "Clear local data". */

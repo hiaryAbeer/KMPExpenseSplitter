@@ -5,7 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.abeerapps.kmpexpensesplitter.core.domain.config.DateProvider
 import com.abeerapps.kmpexpensesplitter.core.domain.model.DecimalInput
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Expense
-import com.abeerapps.kmpexpensesplitter.core.domain.model.Group
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
+import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitInput
@@ -13,10 +14,13 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SupportedCurrencies
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.AddExpenseResult
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.AddExpenseUseCase
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreateGroupResult
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreateGroupUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreateExpenseGroupResult
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreateExpenseGroupUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreatePeopleGroupResult
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreatePeopleGroupUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ExpenseDraft
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveGroupListUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseGroupsUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObservePeopleGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveUserProfileUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -38,15 +42,17 @@ import kotlinx.coroutines.launch
  * which drives the Save button and the split hint.
  */
 class AddExpenseViewModel(
-    observeGroupList: ObserveGroupListUseCase,
+    observeExpenseGroups: ObserveExpenseGroupsUseCase,
+    private val createExpenseGroup: CreateExpenseGroupUseCase,
+    observeGroupList: ObservePeopleGroupsUseCase,
     observeUserProfile: ObserveUserProfileUseCase,
     private val addExpense: AddExpenseUseCase,
-    private val createGroup: CreateGroupUseCase,
+    private val createGroup: CreatePeopleGroupUseCase,
     dateProvider: DateProvider,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
-        dateProvider.today().let { today -> AddExpenseUiState(date = today, today = today) },
+        dateProvider.today().let { today -> AddExpenseUiState(startDate = today, endDate = today, today = today) },
     )
     val uiState: StateFlow<AddExpenseUiState> = _uiState.asStateFlow()
 
@@ -54,6 +60,21 @@ class AddExpenseViewModel(
     val events: Flow<AddExpenseEvent> = _events.receiveAsFlow()
 
     init {
+        viewModelScope.launch {
+            observeExpenseGroups().collect { trips ->
+                updateForm { state ->
+                    val firstLoad = !state.expenseGroupsLoaded
+                    val next = state.copy(expenseGroups = trips, expenseGroupsLoaded = true)
+                    when {
+                        // Like people groups: preselect the first (newest) expense group.
+                        firstLoad && next.expenseGroupId == null -> next.copy(expenseGroupId = trips.firstOrNull()?.id)
+                        // The selected one was removed (e.g. data cleared).
+                        next.expenseGroupId != null && next.expenseGroup == null -> next.copy(expenseGroupId = null)
+                        else -> next
+                    }
+                }
+            }
+        }
         viewModelScope.launch {
             combine(observeGroupList(), observeUserProfile()) { groups, profile -> groups to profile }
                 .collect { (groups, profile) ->
@@ -80,7 +101,29 @@ class AddExpenseViewModel(
         when (action) {
             is AddExpenseAction.TitleChanged ->
                 if (action.value.length <= Expense.MAX_TITLE_LENGTH) updateForm { it.copy(title = action.value) }
-            AddExpenseAction.GroupClicked -> _uiState.update { it.copy(openSheet = AddExpenseSheet.Group) }
+            AddExpenseAction.ExpenseGroupClicked ->
+                _uiState.update { it.copy(openSheet = AddExpenseSheet.ExpenseGroup, expenseGroupQuery = "") }
+            is AddExpenseAction.ExpenseGroupQueryChanged -> _uiState.update { it.copy(expenseGroupQuery = action.value) }
+            is AddExpenseAction.ExpenseGroupSelected -> updateForm { state ->
+                val exists = state.expenseGroups.any { it.id == action.expenseGroupId }
+                state.copy(expenseGroupId = if (exists) action.expenseGroupId else state.expenseGroupId, openSheet = null)
+            }
+            AddExpenseAction.AddExpenseGroupClicked -> _uiState.update { state ->
+                // Start from the search text: "searched, not found, add it" in one step.
+                val name = state.expenseGroupQuery.trim().take(ExpenseGroup.MAX_NAME_LENGTH)
+                state.copy(
+                    openSheet = AddExpenseSheet.CreateExpenseGroup,
+                    newExpenseGroup = NewExpenseGroupForm(name = name, canCreate = createExpenseGroup.validate(name) == null),
+                )
+            }
+            is AddExpenseAction.NewExpenseGroupNameChanged ->
+                if (action.value.length <= ExpenseGroup.MAX_NAME_LENGTH) {
+                    _uiState.update {
+                        it.copy(newExpenseGroup = it.newExpenseGroup.copy(name = action.value, canCreate = createExpenseGroup.validate(action.value) == null))
+                    }
+                }
+            AddExpenseAction.CreateExpenseGroupClicked -> createNewExpenseGroup()
+            AddExpenseAction.GroupClicked -> _uiState.update { it.copy(openSheet = AddExpenseSheet.PeopleGroup) }
             is AddExpenseAction.GroupSelected -> updateForm { state ->
                 val group = state.groups.firstOrNull { it.id == action.groupId }
                 (if (group == null || group.id == state.groupId) state else state.withGroup(group)).copy(openSheet = null)
@@ -88,9 +131,9 @@ class AddExpenseViewModel(
             AddExpenseAction.AddGroupClicked ->
                 _uiState.update { it.copy(openSheet = AddExpenseSheet.CreateGroup, newGroup = NewGroupForm()) }
             is AddExpenseAction.NewGroupNameChanged ->
-                if (action.value.length <= Group.MAX_NAME_LENGTH) updateNewGroup { it.copy(name = action.value) }
+                if (action.value.length <= PeopleGroup.MAX_NAME_LENGTH) updateNewGroup { it.copy(name = action.value) }
             is AddExpenseAction.MemberInputChanged ->
-                if (action.value.length <= Group.MAX_MEMBER_NAME_LENGTH) {
+                if (action.value.length <= PeopleGroup.MAX_MEMBER_NAME_LENGTH) {
                     updateNewGroup { it.copy(memberInput = action.value, memberError = null) }
                 }
             AddExpenseAction.AddMemberClicked -> addTypedMember()
@@ -112,9 +155,12 @@ class AddExpenseViewModel(
             }
             is AddExpenseAction.ShareChanged -> onShareChanged(action.participantId, action.value)
             AddExpenseAction.DateClicked -> _uiState.update { it.copy(openSheet = AddExpenseSheet.Date) }
-            is AddExpenseAction.DateSelected -> updateForm { state ->
-                // The picker blocks future dates; clamp anyway so the rule lives here.
-                state.copy(date = minOf(action.date, state.today), openSheet = null)
+            is AddExpenseAction.DateRangeSelected -> updateForm { state ->
+                // One tap = a one-day expense. The picker blocks future dates; clamp anyway
+                // so the rule lives here, and keep the range ordered.
+                val start = minOf(action.start, state.today)
+                val end = minOf(action.end ?: start, state.today).coerceAtLeast(start)
+                state.copy(startDate = start, endDate = end, openSheet = null)
             }
             is AddExpenseAction.NoteChanged ->
                 if (action.value.length <= Expense.MAX_NOTE_LENGTH) updateForm { it.copy(note = action.value) }
@@ -124,7 +170,34 @@ class AddExpenseViewModel(
         }
     }
 
-    // region Group creation
+    private fun createNewExpenseGroup() {
+        val form = _uiState.value.newExpenseGroup
+        if (!form.canCreate || form.isCreating) return
+        _uiState.update { it.copy(newExpenseGroup = form.copy(isCreating = true)) }
+        viewModelScope.launch {
+            when (val result = createExpenseGroup(form.name)) {
+                is CreateExpenseGroupResult.Success -> updateForm { current ->
+                    val created = result.group
+                    val trips = if (current.expenseGroups.any { it.id == created.id }) current.expenseGroups
+                    else listOf(created) + current.expenseGroups
+                    current.copy(
+                        expenseGroups = trips,
+                        expenseGroupId = created.id,
+                        openSheet = null,
+                        newExpenseGroup = NewExpenseGroupForm(),
+                    )
+                }
+                is CreateExpenseGroupResult.Invalid, CreateExpenseGroupResult.StorageError -> _uiState.update {
+                    it.copy(
+                        newExpenseGroup = it.newExpenseGroup.copy(isCreating = false),
+                        message = AddExpenseMessage.CreateGroupFailed,
+                    )
+                }
+            }
+        }
+    }
+
+    // region People group creation
 
     private fun addTypedMember() {
         val state = _uiState.value
@@ -168,12 +241,12 @@ class AddExpenseViewModel(
         updateNewGroup { it.copy(isCreating = true) }
         viewModelScope.launch {
             when (val result = createGroup(state.newGroup.name, members, includeYou)) {
-                is CreateGroupResult.Success -> updateForm { current ->
+                is CreatePeopleGroupResult.Success -> updateForm { current ->
                     val created = result.group
                     val groups = if (current.groups.any { it.id == created.id }) current.groups else listOf(created) + current.groups
                     current.copy(groups = groups, openSheet = null, newGroup = NewGroupForm()).withGroup(created)
                 }
-                is CreateGroupResult.Invalid, CreateGroupResult.NoProfile, CreateGroupResult.StorageError ->
+                is CreatePeopleGroupResult.Invalid, CreatePeopleGroupResult.NoProfile, CreatePeopleGroupResult.StorageError ->
                     _uiState.update {
                         it.copy(newGroup = it.newGroup.copy(isCreating = false), message = AddExpenseMessage.CreateGroupFailed)
                     }
@@ -226,7 +299,7 @@ class AddExpenseViewModel(
     }
 
     /** Switches to [group]: everyone in it shares, you pay (if a member), typed shares reset. */
-    private fun AddExpenseUiState.withGroup(group: Group?): AddExpenseUiState =
+    private fun AddExpenseUiState.withGroup(group: PeopleGroup?): AddExpenseUiState =
         copy(
             groupId = group?.id,
             groups = if (group == null || groups.any { it.id == group.id }) groups else listOf(group) + groups,
@@ -250,7 +323,8 @@ class AddExpenseViewModel(
             sharing.associateWith { id -> DecimalInput.toHundredths(shareInputs[type]?.get(id).orEmpty()) ?: 0L }
 
         return ExpenseDraft(
-            groupId = groupId,
+            expenseGroupId = expenseGroupId,
+            peopleGroupId = groupId,
             title = title,
             amount = Money(DecimalInput.toHundredths(amount) ?: 0L, currency),
             category = category,
@@ -260,7 +334,8 @@ class AddExpenseViewModel(
                 SplitType.Percentage -> SplitInput.Percentage(typed(SplitType.Percentage))
                 SplitType.Exact -> SplitInput.Exact(typed(SplitType.Exact))
             },
-            date = date,
+            startDate = startDate,
+            endDate = endDate,
             note = note,
             participants = payerOptions,
         )

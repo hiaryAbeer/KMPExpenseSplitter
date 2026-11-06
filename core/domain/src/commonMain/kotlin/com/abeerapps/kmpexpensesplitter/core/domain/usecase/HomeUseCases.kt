@@ -7,8 +7,9 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
 import com.abeerapps.kmpexpensesplitter.core.domain.model.UserProfile
 import com.abeerapps.kmpexpensesplitter.core.domain.model.GroupSummaries
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SupportedCurrencies
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
-import com.abeerapps.kmpexpensesplitter.core.domain.repository.GroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.PeopleGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -19,19 +20,25 @@ class ObserveUserProfileUseCase(private val repository: UserProfileRepository) {
 }
 
 /**
- * Emits a summary of each group (members, total spent, your balance) in the user's
- * default currency, most recently active first. Recomputed whenever groups,
- * expenses or the profile change.
+ * Emits a summary of each expense group (people involved, total spent, your balance)
+ * in the user's default currency, most recently active first. Recomputed whenever
+ * expense groups, people groups, expenses or the profile change.
  */
 class ObserveGroupsUseCase(
-    private val groups: GroupRepository,
+    private val expenseGroups: ExpenseGroupRepository,
+    private val peopleGroups: PeopleGroupRepository,
     private val expenses: ExpenseRepository,
     private val profiles: UserProfileRepository,
 ) {
     operator fun invoke(): Flow<List<GroupSummary>> =
-        combine(groups.observeGroups(), expenses.observeExpenses(), profiles.observeProfile()) { all, spent, profile ->
+        combine(
+            expenseGroups.observeExpenseGroups(),
+            peopleGroups.observeGroups(),
+            expenses.observeExpenses(),
+            profiles.observeProfile(),
+        ) { trips, people, spent, profile ->
             val currency = profile?.defaultCurrency ?: SupportedCurrencies.default.code
-            GroupSummaries.build(all.withYourName(profile?.name), spent, currency)
+            GroupSummaries.build(trips, people.withYourName(profile?.name), spent, currency)
         }
 }
 

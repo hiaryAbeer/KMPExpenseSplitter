@@ -53,7 +53,8 @@ import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_arrow_lef
 import com.abeerapps.kmpexpensesplitter.core.designsystem.theme.ExpenseSplitterTheme
 import com.abeerapps.kmpexpensesplitter.core.designsystem.util.ObserveAsEvents
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
-import com.abeerapps.kmpexpensesplitter.core.domain.model.Group
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
+import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.Res
@@ -61,6 +62,7 @@ import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_ba
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_label_amount
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_label_category
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_label_date
+import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_label_expense_group
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_label_group
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.new_group_failed
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_label_note
@@ -153,7 +155,23 @@ fun AddExpenseContent(
     }
 
     when (uiState.openSheet) {
-        AddExpenseSheet.Group -> GroupSheet(
+        AddExpenseSheet.ExpenseGroup -> ExpenseGroupSheet(
+            query = uiState.expenseGroupQuery,
+            allCount = uiState.expenseGroups.size,
+            results = uiState.filteredExpenseGroups,
+            selectedId = uiState.expenseGroupId,
+            onQueryChange = { onAction(AddExpenseAction.ExpenseGroupQueryChanged(it)) },
+            onSelect = { onAction(AddExpenseAction.ExpenseGroupSelected(it)) },
+            onAdd = { onAction(AddExpenseAction.AddExpenseGroupClicked) },
+            onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
+        )
+        AddExpenseSheet.CreateExpenseGroup -> CreateExpenseGroupSheet(
+            form = uiState.newExpenseGroup,
+            onNameChange = { onAction(AddExpenseAction.NewExpenseGroupNameChanged(it)) },
+            onCreate = { onAction(AddExpenseAction.CreateExpenseGroupClicked) },
+            onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
+        )
+        AddExpenseSheet.PeopleGroup -> GroupSheet(
             groups = uiState.groups,
             selectedId = uiState.groupId,
             onSelect = { onAction(AddExpenseAction.GroupSelected(it)) },
@@ -172,10 +190,11 @@ fun AddExpenseContent(
             onSelect = { onAction(AddExpenseAction.PayerSelected(it)) },
             onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
         )
-        AddExpenseSheet.Date -> ExpenseDatePicker(
-            date = uiState.date,
+        AddExpenseSheet.Date -> ExpenseDateRangeSheet(
+            start = uiState.startDate,
+            end = uiState.endDate,
             today = uiState.today,
-            onSelect = { onAction(AddExpenseAction.DateSelected(it)) },
+            onSelect = { start, end -> onAction(AddExpenseAction.DateRangeSelected(start, end)) },
             onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
         )
         null -> Unit
@@ -236,6 +255,19 @@ private fun FormContent(uiState: AddExpenseUiState, onAction: (AddExpenseAction)
         )
     }
 
+    Section(stringResource(Res.string.add_expense_label_expense_group)) {
+        ExpenseGroupField(expenseGroup = uiState.expenseGroup, onClick = { onAction(AddExpenseAction.ExpenseGroupClicked) })
+    }
+
+    Section(stringResource(Res.string.add_expense_label_date)) {
+        DateCard(
+            start = uiState.startDate,
+            end = uiState.endDate,
+            today = uiState.today,
+            onClick = { onAction(AddExpenseAction.DateClicked) },
+        )
+    }
+
     Section(stringResource(Res.string.add_expense_label_group)) {
         Box(Modifier.testTag(GroupPickerTestTags.FIELD)) {
             GroupField(group = uiState.group, onClick = { onAction(AddExpenseAction.GroupClicked) })
@@ -280,10 +312,6 @@ private fun FormContent(uiState: AddExpenseUiState, onAction: (AddExpenseAction)
                 )
             }
         }
-    }
-
-    Section(stringResource(Res.string.add_expense_label_date)) {
-        DateCard(date = uiState.date, today = uiState.today, onClick = { onAction(AddExpenseAction.DateClicked) })
     }
 
     Section(stringResource(Res.string.add_expense_label_note)) {
@@ -343,13 +371,16 @@ private fun SaveButton(enabled: Boolean, isSaving: Boolean, onClick: () -> Unit)
 private val PreviewToday = LocalDate(2026, 4, 29)
 
 private fun previewState(splitType: SplitType = SplitType.Equal) = AddExpenseUiState(
-    date = PreviewToday,
+    startDate = PreviewToday,
+    endDate = PreviewToday,
+    expenseGroups = listOf(ExpenseGroup("t", "Aqaba Trip", PreviewToday)),
+    expenseGroupId = "t",
     today = PreviewToday,
     isLoading = false,
     currency = CurrencyCode.of("JOD")!!,
     you = Participant(Participant.YOU_ID, "Ahmad"),
     groups = listOf(
-        Group(
+        PeopleGroup(
             id = "g",
             name = "Aqaba Trip",
             members = listOf(
@@ -385,7 +416,7 @@ private fun AddExpensePercentagePreview() {
 private fun AddExpenseNoGroupPreview() {
     ExpenseSplitterTheme {
         AddExpenseContent(
-            AddExpenseUiState(date = PreviewToday, today = PreviewToday, isLoading = false, you = Participant(Participant.YOU_ID, "Ahmad"), paidBy = Participant.YOU_ID),
+            AddExpenseUiState(startDate = PreviewToday, endDate = PreviewToday, today = PreviewToday, isLoading = false, you = Participant(Participant.YOU_ID, "Ahmad"), paidBy = Participant.YOU_ID),
             onAction = {},
             onBack = {},
         )

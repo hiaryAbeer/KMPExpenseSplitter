@@ -26,20 +26,25 @@ class AddExpenseUseCaseTest {
     private val useCase = AddExpenseUseCase(repository, newId = { "id-1" })
 
     private fun draft(
-        groupId: String? = "g1",
+        expenseGroupId: String? = "t1",
+        peopleGroupId: String? = "g1",
+        startDate: LocalDate = LocalDate(2026, 4, 29),
+        endDate: LocalDate = startDate,
         title: String = "  Dinner  ",
         amount: Long = 30_00,
         paidBy: String? = "a",
         split: SplitInput = SplitInput.Equal(listOf("a", "s")),
         note: String = "  ",
     ) = ExpenseDraft(
-        groupId = groupId,
+        expenseGroupId = expenseGroupId,
+        peopleGroupId = peopleGroupId,
         title = title,
         amount = Money(amount, jod),
         category = ExpenseCategory.Food,
         paidBy = paidBy,
         split = split,
-        date = LocalDate(2026, 4, 29),
+        startDate = startDate,
+        endDate = endDate,
         note = note,
         participants = people,
     )
@@ -50,14 +55,16 @@ class AddExpenseUseCaseTest {
 
         val expected = Expense(
             id = "id-1",
-            groupId = "g1",
+            expenseGroupId = "t1",
+            peopleGroupId = "g1",
             title = "Dinner",
             amount = Money(30_00, jod),
             category = ExpenseCategory.Food,
             paidBy = "a",
             splitType = SplitType.Equal,
             shares = listOf(ExpenseShare("a", Money(15_00, jod)), ExpenseShare("s", Money(15_00, jod))),
-            date = LocalDate(2026, 4, 29),
+            startDate = LocalDate(2026, 4, 29),
+            endDate = LocalDate(2026, 4, 29),
             note = null,
         )
         assertEquals(AddExpenseResult.Success(expected), result)
@@ -78,8 +85,22 @@ class AddExpenseUseCaseTest {
     }
 
     @Test
-    fun `a group is required`() {
-        assertEquals(listOf(ExpenseDraftError.NoGroup), useCase.validate(draft(groupId = null)))
+    fun `a people group is required`() {
+        assertEquals(listOf(ExpenseDraftError.NoPeopleGroup), useCase.validate(draft(peopleGroupId = null)))
+    }
+
+    @Test
+    fun `an expense group is required`() {
+        assertEquals(listOf(ExpenseDraftError.NoExpenseGroup), useCase.validate(draft(expenseGroupId = null)))
+    }
+
+    @Test
+    fun `a date range is stored and must not end before it starts`() = runTest {
+        val start = LocalDate(2026, 4, 27)
+        val end = LocalDate(2026, 4, 29)
+        val stored = (useCase(draft(startDate = start, endDate = end)) as AddExpenseResult.Success).expense
+        assertEquals(start to end, stored.startDate to stored.endDate)
+        assertEquals(listOf(ExpenseDraftError.EndBeforeStart), useCase.validate(draft(startDate = end, endDate = start)))
     }
 
     @Test

@@ -1,7 +1,7 @@
 package com.abeerapps.kmpexpensesplitter.core.domain.usecase
 
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
-import com.abeerapps.kmpexpensesplitter.core.domain.model.Group
+import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.GroupSummary
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
@@ -13,8 +13,10 @@ import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileReposi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
+import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeExpenseRepository
-import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakePeopleGroupRepository
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
@@ -90,12 +92,14 @@ class SettingsUseCasesTest {
                 return ExportResult.Saved("r.pdf", "Downloads")
             }
         }
-        val groups = FakeGroupRepository()
-        val observeGroups = ObserveGroupsUseCase(groups, FakeExpenseRepository(), FakeProfiles(UserProfile("Ahmad", jod)))
+        val groups = FakeExpenseGroupRepository()
+        val observeGroups = ObserveGroupsUseCase(
+            groups, FakePeopleGroupRepository(), FakeExpenseRepository(), FakeProfiles(UserProfile("Ahmad", jod)),
+        )
         assertEquals(ExportResult.Failed, ExportExpenseReportUseCase(observeGroups, exporter)())
         assertFalse(exporterCalled)
 
-        groups.groups.value = listOf(Group("1", "Trip", listOf(Participant(Participant.YOU_ID, "Ahmad")), LocalDate(2026, 4, 1)))
+        groups.groups.value = listOf(ExpenseGroup("1", "Trip", LocalDate(2026, 4, 1)))
         assertEquals(ExportResult.Saved("r.pdf", "Downloads"), ExportExpenseReportUseCase(observeGroups, exporter)())
     }
 }

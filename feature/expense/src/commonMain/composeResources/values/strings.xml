@@ -5,16 +5,31 @@
 
     <string name="add_expense_label_title">Title</string>
     <string name="add_expense_title_placeholder">What’s this expense for?</string>
-    <string name="add_expense_label_group">Group</string>
-    <string name="add_expense_no_group">No group</string>
+    <string name="add_expense_label_expense_group">Expense Group</string>
+    <string name="add_expense_no_expense_group">Add expense group</string>
+    <string name="expense_group_sheet_title">Expense groups</string>
+    <string name="expense_group_search_placeholder">Search expense groups</string>
+    <string name="expense_group_empty">No expense groups yet. Add one, e.g. a trip.</string>
+    <!-- %1$s = search text -->
+    <string name="expense_group_no_results">No expense group matches “%1$s”.</string>
+    <string name="expense_group_add">Add expense group</string>
+    <string name="new_expense_group_title">New expense group</string>
+    <string name="new_expense_group_name_label">Name</string>
+    <string name="new_expense_group_name_placeholder">e.g. Aqaba Trip</string>
+    <string name="new_expense_group_create">Add</string>
+    <string name="date_sheet_title">Expense date</string>
+    <string name="date_sheet_hint">Tap a day, or tap a second day to set an end date.</string>
+    <string name="date_sheet_done">Done</string>
+    <string name="add_expense_label_group">People Group</string>
+    <string name="add_expense_no_group">Add group</string>
     <plurals name="group_member_count">
         <item quantity="one">%1$d member</item>
         <item quantity="other">%1$d members</item>
     </plurals>
-    <string name="group_sheet_title">Select group</string>
+    <string name="group_sheet_title">Select people group</string>
     <string name="group_sheet_empty">No groups yet. Add one to split this expense.</string>
     <string name="group_add">Add group</string>
-    <string name="new_group_title">New group</string>
+    <string name="new_group_title">New people group</string>
     <string name="new_group_name_label">Group name</string>
     <string name="new_group_name_placeholder">e.g. Aqaba Trip</string>
     <string name="new_group_members_label">Members</string>
@@ -61,8 +76,6 @@
     <!-- %1$s = full date, e.g. April 29, 2026 -->
     <string name="date_today">Today, %1$s</string>
     <string name="date_yesterday">Yesterday, %1$s</string>
-    <string name="date_picker_confirm">OK</string>
-    <string name="date_picker_cancel">Cancel</string>
 
     <string name="add_expense_label_note">Note (Optional)</string>
     <string name="add_expense_note_placeholder">Add a note...</string>

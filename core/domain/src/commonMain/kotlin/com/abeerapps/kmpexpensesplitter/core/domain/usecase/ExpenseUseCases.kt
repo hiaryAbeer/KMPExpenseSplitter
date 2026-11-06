@@ -16,22 +16,28 @@ import kotlin.uuid.Uuid
 
 /** Everything the user entered on "Add Expense", before validation. */
 data class ExpenseDraft(
-    /** Required: every expense belongs to a group. */
-    val groupId: String?,
+    /** Required: the expense group (trip) it belongs to. */
+    val expenseGroupId: String?,
+    /** Required: the people group it is split within. */
+    val peopleGroupId: String?,
     val title: String,
     val amount: Money,
     val category: ExpenseCategory,
     val paidBy: String?,
     val split: SplitInput,
-    val date: LocalDate,
+    val startDate: LocalDate,
+    /** Equal to [startDate] for a one-day expense; never before it. */
+    val endDate: LocalDate,
     val note: String,
-    /** Who may appear in [paidBy] and [split]: the selected group's members. */
+    /** Who may appear in [paidBy] and [split]: the selected people group's members. */
     val participants: List<Participant>,
 )
 
 /** A rule the draft breaks. The UI decides how to show each one. */
 sealed interface ExpenseDraftError {
-    data object NoGroup : ExpenseDraftError
+    data object NoExpenseGroup : ExpenseDraftError
+    data object NoPeopleGroup : ExpenseDraftError
+    data object EndBeforeStart : ExpenseDraftError
     data object BlankTitle : ExpenseDraftError
     data object TitleTooLong : ExpenseDraftError
     data object NonPositiveAmount : ExpenseDraftError
@@ -60,7 +66,9 @@ class AddExpenseUseCase(
 
     /** @return every broken rule; empty means [invoke] will accept the draft. */
     fun validate(draft: ExpenseDraft): List<ExpenseDraftError> = buildList {
-        if (draft.groupId == null) add(ExpenseDraftError.NoGroup)
+        if (draft.expenseGroupId == null) add(ExpenseDraftError.NoExpenseGroup)
+        if (draft.peopleGroupId == null) add(ExpenseDraftError.NoPeopleGroup)
+        if (draft.endDate < draft.startDate) add(ExpenseDraftError.EndBeforeStart)
         val title = draft.title.trim()
         if (title.isEmpty()) add(ExpenseDraftError.BlankTitle)
         if (title.length > Expense.MAX_TITLE_LENGTH) add(ExpenseDraftError.TitleTooLong)
@@ -87,14 +95,16 @@ class AddExpenseUseCase(
             (SplitCalculator.split(draft.amount, draft.split) as SplitCalculator.Result.Success).shares
         val expense = Expense(
             id = newId(),
-            groupId = requireNotNull(draft.groupId),
+            expenseGroupId = requireNotNull(draft.expenseGroupId),
+            peopleGroupId = requireNotNull(draft.peopleGroupId),
             title = draft.title.trim(),
             amount = draft.amount,
             category = draft.category,
             paidBy = requireNotNull(draft.paidBy),
             splitType = draft.split.type,
             shares = shares,
-            date = draft.date,
+            startDate = draft.startDate,
+            endDate = draft.endDate,
             note = draft.note.trim().ifEmpty { null },
         )
         return try {

@@ -5,14 +5,16 @@ import app.cash.turbine.test
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Expense
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseCategory
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseShare
-import com.abeerapps.kmpexpensesplitter.core.domain.model.Group
+import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
 import com.abeerapps.kmpexpensesplitter.core.domain.model.UserProfile
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
-import com.abeerapps.kmpexpensesplitter.core.domain.repository.GroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.PeopleGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CalculateBalanceSummaryUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveGroupsUseCase
@@ -38,7 +40,8 @@ class HomeViewModelTest {
 
     private val jod = CurrencyCode.of("JOD")!!
     private val profiles = FakeProfiles(UserProfile("Ahmad", jod))
-    private val groups = FakeGroups()
+    private val groups = FakeExpenseGroups()
+    private val people = FakePeopleGroups()
     private val expenses = FakeExpenses()
 
     @BeforeTest
@@ -49,25 +52,26 @@ class HomeViewModelTest {
 
     private fun viewModel() = HomeViewModel(
         ObserveUserProfileUseCase(profiles),
-        ObserveGroupsUseCase(groups, expenses, profiles),
+        ObserveGroupsUseCase(groups, people, expenses, profiles),
         CalculateBalanceSummaryUseCase(),
     )
 
     private val you = Participant(Participant.YOU_ID, "Ahmad")
     private val sara = Participant("s", "Sara")
 
-    /** A group with you and Sara whose single expense leaves you with [balance]. */
-    private fun group(id: String, name: String, balance: Long): Group {
+    /** An expense group whose single expense (split with Sara) leaves you with [balance]. */
+    private fun group(id: String, name: String, balance: Long): ExpenseGroup {
+        people.groups.value = listOf(PeopleGroup("pg", "Friends", listOf(you, sara), LocalDate(2026, 4, 1)))
         if (balance != 0L) {
             val (payer, debtor) = if (balance > 0) you.id to sara.id else sara.id to you.id
             val amount = Money(kotlin.math.abs(balance), jod)
             expenses.expenses.value += Expense(
-                id = "e$id", groupId = id, title = "x", amount = amount, category = ExpenseCategory.Food,
+                id = "e$id", expenseGroupId = id, peopleGroupId = "pg", title = "x", amount = amount, category = ExpenseCategory.Food,
                 paidBy = payer, splitType = SplitType.Exact, shares = listOf(ExpenseShare(debtor, amount)),
-                date = LocalDate(2026, 4, 29), note = null,
+                startDate = LocalDate(2026, 4, 29), endDate = LocalDate(2026, 4, 29), note = null,
             )
         }
-        return Group(id, name, listOf(you, sara), LocalDate(2026, 4, 1))
+        return ExpenseGroup(id, name, LocalDate(2026, 4, 1))
     }
 
     /** Skips the initial loading state (it may be conflated away entirely). */
@@ -158,10 +162,16 @@ class HomeViewModelTest {
         }
     }
 
-    private class FakeGroups : GroupRepository {
-        val groups = MutableStateFlow<List<Group>>(emptyList())
-        override fun observeGroups(): Flow<List<Group>> = groups
-        override suspend fun createGroup(group: Group) { groups.value = listOf(group) + groups.value }
+    private class FakeExpenseGroups : ExpenseGroupRepository {
+        val groups = MutableStateFlow<List<ExpenseGroup>>(emptyList())
+        override fun observeExpenseGroups(): Flow<List<ExpenseGroup>> = groups
+        override suspend fun createExpenseGroup(group: ExpenseGroup) { groups.value = listOf(group) + groups.value }
+    }
+
+    private class FakePeopleGroups : PeopleGroupRepository {
+        val groups = MutableStateFlow<List<PeopleGroup>>(emptyList())
+        override fun observeGroups(): Flow<List<PeopleGroup>> = groups
+        override suspend fun createGroup(group: PeopleGroup) { groups.value = listOf(group) + groups.value }
     }
 
     private class FakeExpenses : ExpenseRepository {

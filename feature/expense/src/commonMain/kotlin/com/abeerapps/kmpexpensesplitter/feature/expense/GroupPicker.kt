@@ -43,7 +43,7 @@ import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_plus
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_trash
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_users
 import com.abeerapps.kmpexpensesplitter.core.designsystem.theme.ExpenseSplitterTheme
-import com.abeerapps.kmpexpensesplitter.core.domain.model.Group
+import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.MemberNameError
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.Res
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_no_group
@@ -76,9 +76,9 @@ object GroupPickerTestTags {
     const val CREATE = "new_group_create"
 }
 
-/** "Group" field under Title: "No group" until one is picked; opens the group sheet. */
+/** "People group" field: a prompt until one is picked; opens the people-group sheet. */
 @Composable
-internal fun GroupField(group: Group?, onClick: () -> Unit) {
+internal fun GroupField(group: PeopleGroup?, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     AppCard(
         modifier = Modifier
@@ -87,8 +87,8 @@ internal fun GroupField(group: Group?, onClick: () -> Unit) {
             .clickable(onClick = onClick, role = Role.Button),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            GroupIcon(highlighted = group != null)
-            Spacer(Modifier.width(ExpenseSplitterTheme.spacing.smd))
+//            GroupIcon(highlighted = group != null)
+//            Spacer(Modifier.width(ExpenseSplitterTheme.spacing.smd))
             Column(Modifier.weight(1f)) {
                 Text(
                     text = group?.name ?: stringResource(Res.string.add_expense_no_group),
@@ -130,7 +130,7 @@ internal fun SplitBetweenDisabled() {
 /** Every group as a radio row, then "Add group" at the bottom. */
 @Composable
 internal fun GroupSheet(
-    groups: List<Group>,
+    groups: List<PeopleGroup>,
     selectedId: String?,
     onSelect: (String) -> Unit,
     onAddGroup: () -> Unit,

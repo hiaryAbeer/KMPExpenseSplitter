@@ -38,20 +38,25 @@ data class ExpenseShare(val participantId: String, val amount: Money)
  * Invariant (enforced by `AddExpenseUseCase`): [shares] are positive, in
  * [amount]'s currency, and add up to exactly [amount].
  *
- * @property groupId the [Group] the expense belongs to.
+ * @property expenseGroupId the [ExpenseGroup] (e.g. a trip) the expense is part of.
+ * @property peopleGroupId the [PeopleGroup] the expense is split within.
  * @property paidBy id of the [Participant] who paid.
+ * @property startDate first day of the expense; [endDate] equals it for one-day expenses
+ *   (a hotel stay spans several days).
  * @property note optional free text; `null` when empty.
  */
 data class Expense(
     val id: String,
-    val groupId: String,
+    val expenseGroupId: String,
+    val peopleGroupId: String,
     val title: String,
     val amount: Money,
     val category: ExpenseCategory,
     val paidBy: String,
     val splitType: SplitType,
     val shares: List<ExpenseShare>,
-    val date: LocalDate,
+    val startDate: LocalDate,
+    val endDate: LocalDate,
     val note: String?,
 ) {
     companion object {

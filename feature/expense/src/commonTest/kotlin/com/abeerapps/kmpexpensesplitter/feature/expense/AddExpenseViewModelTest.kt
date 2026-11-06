@@ -3,20 +3,24 @@ package com.abeerapps.kmpexpensesplitter.feature.expense
 import app.cash.turbine.test
 import com.abeerapps.kmpexpensesplitter.core.domain.config.DateProvider
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
-import com.abeerapps.kmpexpensesplitter.core.domain.model.Group
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
+import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Expense
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseCategory
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
 import com.abeerapps.kmpexpensesplitter.core.domain.model.UserProfile
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
-import com.abeerapps.kmpexpensesplitter.core.domain.repository.GroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.PeopleGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.AddExpenseUseCase
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreateGroupUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreateExpenseGroupUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreatePeopleGroupUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ExpenseDraftError
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.MemberNameError
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveGroupListUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObservePeopleGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveUserProfileUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,11 +47,13 @@ class AddExpenseViewModelTest {
     private val profiles = FakeProfiles(UserProfile("Ahmad", usd))
     private val expenses = FakeExpenses()
     private val groups = FakeGroups()
+    private val aqaba = ExpenseGroup("t1", "Aqaba Trip", today)
+    private val trips = FakeExpenseGroups(listOf(aqaba))
     private var nextId = 0
 
     private val you = Participant(Participant.YOU_ID, "Ahmad")
     private val sara = Participant("s", "Sara")
-    private val trip = Group("g1", "Trip", listOf(you, sara), today)
+    private val trip = PeopleGroup("g1", "Trip", listOf(you, sara), today)
 
     @BeforeTest
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -58,10 +64,12 @@ class AddExpenseViewModelTest {
     private val dateProvider = DateProvider { today }
 
     private fun viewModel() = AddExpenseViewModel(
-        observeGroupList = ObserveGroupListUseCase(groups, profiles),
+        observeExpenseGroups = ObserveExpenseGroupsUseCase(trips),
+        createExpenseGroup = CreateExpenseGroupUseCase(trips, dateProvider, newId = { "t${nextId++}" }),
+        observeGroupList = ObservePeopleGroupsUseCase(groups, profiles),
         observeUserProfile = ObserveUserProfileUseCase(profiles),
         addExpense = AddExpenseUseCase(expenses, newId = { "e1" }),
-        createGroup = CreateGroupUseCase(groups, profiles, dateProvider, newId = { "n${nextId++}" }),
+        createGroup = CreatePeopleGroupUseCase(groups, profiles, dateProvider, newId = { "n${nextId++}" }),
         dateProvider = dateProvider,
     )
 
@@ -83,7 +91,7 @@ class AddExpenseViewModelTest {
         assertTrue(state.participants.isEmpty())
         assertEquals(listOf(you), state.payerOptions)
         assertEquals(Participant.YOU_ID, state.paidBy)
-        assertEquals(today, state.date)
+        assertEquals(today to today, state.startDate to state.endDate)
         assertEquals(ExpenseCategory.Food, state.category)
         assertFalse(state.isSplitHintError) // Disabled section: no red hint.
     }
@@ -94,7 +102,7 @@ class AddExpenseViewModelTest {
         vm.onAction(AddExpenseAction.TitleChanged("Lunch"))
         vm.onAction(AddExpenseAction.AmountChanged("12.50"))
         assertFalse(vm.uiState.value.canSave)
-        assertTrue(ExpenseDraftError.NoGroup in vm.uiState.value.errors)
+        assertTrue(ExpenseDraftError.NoPeopleGroup in vm.uiState.value.errors)
 
         groups.groups.value = listOf(trip)
         vm.onAction(AddExpenseAction.GroupSelected(trip.id))
@@ -106,7 +114,7 @@ class AddExpenseViewModelTest {
         groups.groups.value = listOf(trip)
         val vm = viewModel()
         vm.onAction(AddExpenseAction.GroupClicked)
-        assertEquals(AddExpenseSheet.Group, vm.uiState.value.openSheet)
+        assertEquals(AddExpenseSheet.PeopleGroup, vm.uiState.value.openSheet)
 
         vm.onAction(AddExpenseAction.GroupSelected(trip.id))
 
@@ -155,7 +163,7 @@ class AddExpenseViewModelTest {
 
     @Test
     fun `existing groups preselect the first one`() {
-        val older = Group("g0", "Older", listOf(you), LocalDate(2026, 1, 1))
+        val older = PeopleGroup("g0", "Older", listOf(you), LocalDate(2026, 1, 1))
         groups.groups.value = listOf(trip, older)
 
         val state = viewModel().uiState.value
@@ -276,16 +284,86 @@ class AddExpenseViewModelTest {
     }
 
     @Test
-    fun `future dates are clamped to today`() {
+    fun `one tapped day means start and end are the same`() {
         val vm = viewModel()
         vm.onAction(AddExpenseAction.DateClicked)
         assertEquals(AddExpenseSheet.Date, vm.uiState.value.openSheet)
-        vm.onAction(AddExpenseAction.DateSelected(LocalDate(2026, 5, 3)))
-        assertEquals(today, vm.uiState.value.date)
-        assertNull(vm.uiState.value.openSheet)
 
-        vm.onAction(AddExpenseAction.DateSelected(LocalDate(2026, 4, 1)))
-        assertEquals(LocalDate(2026, 4, 1), vm.uiState.value.date)
+        vm.onAction(AddExpenseAction.DateRangeSelected(LocalDate(2026, 4, 20), end = null))
+
+        val state = vm.uiState.value
+        assertEquals(LocalDate(2026, 4, 20) to LocalDate(2026, 4, 20), state.startDate to state.endDate)
+        assertNull(state.openSheet)
+    }
+
+    @Test
+    fun `a second day sets the end date`() {
+        val vm = viewModel()
+        vm.onAction(AddExpenseAction.DateRangeSelected(LocalDate(2026, 4, 20), LocalDate(2026, 4, 23)))
+        assertEquals(LocalDate(2026, 4, 20) to LocalDate(2026, 4, 23), vm.uiState.value.let { it.startDate to it.endDate })
+    }
+
+    @Test
+    fun `future dates are clamped to today`() {
+        val vm = viewModel()
+        vm.onAction(AddExpenseAction.DateRangeSelected(LocalDate(2026, 4, 28), LocalDate(2026, 5, 3)))
+        assertEquals(LocalDate(2026, 4, 28) to today, vm.uiState.value.let { it.startDate to it.endDate })
+        vm.onAction(AddExpenseAction.DateRangeSelected(LocalDate(2026, 5, 3), null))
+        assertEquals(today to today, vm.uiState.value.let { it.startDate to it.endDate })
+    }
+
+    @Test
+    fun `the newest expense group is preselected`() {
+        trips.groups.value = listOf(ExpenseGroup("t2", "Newer", today), aqaba)
+        assertEquals("t2", viewModel().uiState.value.expenseGroupId)
+    }
+
+    @Test
+    fun `an expense group is required to save`() {
+        trips.groups.value = emptyList()
+        val vm = viewModel()
+        vm.fillValidForm()
+        assertNull(vm.uiState.value.expenseGroup)
+        assertEquals(listOf(ExpenseDraftError.NoExpenseGroup), vm.uiState.value.errors)
+        assertFalse(vm.uiState.value.canSave)
+    }
+
+    @Test
+    fun `expense group sheet searches by name and selects`() {
+        val beach = ExpenseGroup("t2", "Dead Sea", today)
+        trips.groups.value = listOf(beach, aqaba)
+        val vm = viewModel()
+        vm.onAction(AddExpenseAction.ExpenseGroupClicked)
+        assertEquals(AddExpenseSheet.ExpenseGroup, vm.uiState.value.openSheet)
+
+        vm.onAction(AddExpenseAction.ExpenseGroupQueryChanged("aqa"))
+        assertEquals(listOf(aqaba), vm.uiState.value.filteredExpenseGroups)
+
+        vm.onAction(AddExpenseAction.ExpenseGroupSelected(aqaba.id))
+        assertEquals(aqaba, vm.uiState.value.expenseGroup)
+        assertNull(vm.uiState.value.openSheet)
+    }
+
+    @Test
+    fun `adding an expense group starts from the search text then selects it`() {
+        val vm = viewModel()
+        vm.onAction(AddExpenseAction.ExpenseGroupClicked)
+        vm.onAction(AddExpenseAction.ExpenseGroupQueryChanged("  Petra  "))
+        vm.onAction(AddExpenseAction.AddExpenseGroupClicked)
+
+        assertEquals(AddExpenseSheet.CreateExpenseGroup, vm.uiState.value.openSheet)
+        assertEquals("Petra", vm.uiState.value.newExpenseGroup.name)
+        assertTrue(vm.uiState.value.newExpenseGroup.canCreate)
+
+        vm.onAction(AddExpenseAction.NewExpenseGroupNameChanged(" "))
+        assertFalse(vm.uiState.value.newExpenseGroup.canCreate)
+        vm.onAction(AddExpenseAction.NewExpenseGroupNameChanged("Petra Trip"))
+        vm.onAction(AddExpenseAction.CreateExpenseGroupClicked)
+
+        val state = vm.uiState.value
+        assertNull(state.openSheet)
+        assertEquals("Petra Trip", state.expenseGroup?.name)
+        assertEquals(listOf("Petra Trip", "Aqaba Trip"), trips.groups.value.map { it.name })
     }
 
     @Test
@@ -300,7 +378,9 @@ class AddExpenseViewModelTest {
             assertEquals(AddExpenseEvent.Saved, awaitItem())
         }
         val saved = expenses.stored.single()
-        assertEquals(trip.id, saved.groupId)
+        assertEquals(aqaba.id, saved.expenseGroupId)
+        assertEquals(trip.id, saved.peopleGroupId)
+        assertEquals(today to today, saved.startDate to saved.endDate)
         assertEquals("Lunch", saved.title)
         assertEquals(12_50L, saved.amount.minorUnits)
         assertEquals(usd, saved.amount.currency)
@@ -337,10 +417,18 @@ class AddExpenseViewModelTest {
         }
     }
 
-    private class FakeGroups : GroupRepository {
-        val groups = MutableStateFlow<List<Group>>(emptyList())
-        override fun observeGroups(): Flow<List<Group>> = groups
-        override suspend fun createGroup(group: Group) {
+    private class FakeGroups : PeopleGroupRepository {
+        val groups = MutableStateFlow<List<PeopleGroup>>(emptyList())
+        override fun observeGroups(): Flow<List<PeopleGroup>> = groups
+        override suspend fun createGroup(group: PeopleGroup) {
+            groups.value = listOf(group) + groups.value
+        }
+    }
+
+    private class FakeExpenseGroups(initial: List<ExpenseGroup>) : ExpenseGroupRepository {
+        val groups = MutableStateFlow(initial)
+        override fun observeExpenseGroups(): Flow<List<ExpenseGroup>> = groups
+        override suspend fun createExpenseGroup(group: ExpenseGroup) {
             groups.value = listOf(group) + groups.value
         }
     }

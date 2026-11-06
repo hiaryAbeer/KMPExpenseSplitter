@@ -64,9 +64,10 @@ After registration the app opens the main shell: bottom navigation with **Home**
 **Settings** (Groups/Settings are placeholders). Home shows the greeting with the registered name,
 "You are owed" / "You owe" totals in the default currency, group search, and **Recent Groups**.
 
-Group cards are computed by `ObserveGroupsUseCase` from the groups and their expenses
-(`GroupSummaries.build`): total spent, and your balance = what you paid − your shares. Groups are
-ordered by latest activity. With no groups, Home shows the generic `EmptyState` ("No groups yet",
+**Recent Groups are expense groups** (e.g. a trip). Their cards are computed by
+`ObserveGroupsUseCase` from each expense group's expenses (`GroupSummaries.build`): the people
+involved (from the people groups its expenses used), total spent, and your balance = what you paid −
+your shares. Ordered by latest activity. With no groups, Home shows the generic `EmptyState` ("No groups yet",
 no button). The "+" button opens **Add Expense**, where groups are created.
 
 Money is stored as integer hundredths (`Money.minorUnits`) and always shown with two decimals,
@@ -75,16 +76,30 @@ conversion exists.
 
 ## Add Expense
 
-Opened from the Home "+" button (`:feature:expense`). Title, **group** (required), amount (in the
-default currency), category, payer, split type, people to split between, date (today or earlier)
-and an optional note.
+Opened from the Home "+" button (`:feature:expense`). Fields in order: title, **expense group**,
+**date**, **people group**, amount (default currency), category, payer, split type, people to split
+between, note. Expense group and people group are both required.
 
-- **Group**: preselects the first (newest) group when groups exist, else "No group". The group
+Two kinds of group:
+
+| | Expense group (`ExpenseGroup`) | People group (`PeopleGroup`) |
+|---|---|---|
+| What | Related expenses, e.g. "Aqaba Trip" | Who an expense is split between |
+| Has | Name + generated unique id (never shown; names may repeat) | Name + members |
+| Shown | Home → Recent Groups | Add Expense → Split Between / Paid By |
+
+One expense group can contain expenses split within different people groups.
+
+- **Expense group**: preselects the newest one. Its sheet has a search field (by name) and **Add
+  expense group**, which opens a name form prefilled with the search text; "Add" creates and selects it.
+- **Date**: a calendar sheet (dates up to today). The first tap sets a one-day expense (start = end);
+  a second tap sets the end date, e.g. a hotel stay. Shown as "Today, …" or "November 2 – November 4, 2026".
+- **People group**: preselects the first (newest) group when groups exist, else "No group". The group
   sheet's **Add group** opens a form: group name + members. You are listed first and can be removed
   like anyone else (typing your own name adds you back). "Add" is enabled with a name and at least
   one member; it creates the group (`CreateGroupUseCase`) and selects it. Member names must be unique
   (ignoring case, including yours while you're in the group).
-- **Split Between** lists the selected group's members, all ticked; it is disabled without a group.
+- **Split Between** lists the selected people group's members, all ticked; it is disabled without one.
 
 - **Split rules live in the domain** (`SplitCalculator`): *Equal* divides between ticked people,
   *Percentage* needs exactly 100%, *Exact* needs amounts that add up to the total. Everything is in
@@ -93,9 +108,9 @@ and an optional note.
 - `AddExpenseUseCase.validate` is the single set of rules: the ViewModel runs it on every change to
   enable **Save** (outlined until valid, then filled) and to turn the split hint red, and the use case
   enforces it again on save.
-- Groups and expenses are kept in `InMemoryGroupRepository` / `InMemoryExpenseRepository` (session
-  only) and wiped by "Clear local data". Swap those two bindings for database storage; nothing above
-  the data layer changes.
+- Expense groups, people groups and expenses are kept in `InMemoryExpenseGroupRepository`,
+  `InMemoryPeopleGroupRepository` and `InMemoryExpenseRepository` (session only) and wiped by
+  "Clear local data". Swap those bindings for database storage; nothing above the data layer changes.
 
 ## Settings
 
