@@ -190,6 +190,8 @@ class HomeViewModelTest {
     }
 
     private class FakeExpenses : ExpenseRepository {
+        override suspend fun updateExpense(expense: Expense) = Unit
+        override suspend fun deleteExpense(expenseId: String) = Unit
         override suspend fun deleteExpensesIn(expenseGroupId: String) = Unit
         val expenses = MutableStateFlow<List<Expense>>(emptyList())
         override fun observeExpenses(): Flow<List<Expense>> = expenses

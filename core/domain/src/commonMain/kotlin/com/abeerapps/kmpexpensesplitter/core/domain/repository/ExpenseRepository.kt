@@ -12,6 +12,12 @@ interface ExpenseRepository {
     /** Stores [expense]. Throws on storage failure. */
     suspend fun addExpense(expense: Expense)
 
+    /** Replaces the expense with [expense]'s id. Throws on storage failure. */
+    suspend fun updateExpense(expense: Expense)
+
+    /** Removes the expense with [expenseId], if present. Throws on storage failure. */
+    suspend fun deleteExpense(expenseId: String)
+
     /** Removes every expense of the expense group [expenseGroupId]. Throws on storage failure. */
     suspend fun deleteExpensesIn(expenseGroupId: String)
 }

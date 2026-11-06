@@ -34,6 +34,12 @@ class FakeExpenseRepository(initial: List<Expense> = emptyList()) : ExpenseRepos
     override suspend fun addExpense(expense: Expense) {
         expenses.value = listOf(expense) + expenses.value
     }
+    override suspend fun updateExpense(expense: Expense) {
+        expenses.value = expenses.value.map { if (it.id == expense.id) expense else it }
+    }
+    override suspend fun deleteExpense(expenseId: String) {
+        expenses.value = expenses.value.filterNot { it.id == expenseId }
+    }
     override suspend fun deleteExpensesIn(expenseGroupId: String) {
         expenses.value = expenses.value.filterNot { it.expenseGroupId == expenseGroupId }
     }

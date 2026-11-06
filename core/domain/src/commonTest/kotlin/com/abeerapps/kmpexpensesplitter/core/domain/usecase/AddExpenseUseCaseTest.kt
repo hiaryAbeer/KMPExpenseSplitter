@@ -131,6 +131,8 @@ class AddExpenseUseCaseTest {
     }
 
     private class FakeExpenseRepository : ExpenseRepository {
+        override suspend fun updateExpense(expense: Expense) = Unit
+        override suspend fun deleteExpense(expenseId: String) = Unit
         override suspend fun deleteExpensesIn(expenseGroupId: String) = Unit
         val stored = mutableListOf<Expense>()
         var failNext = false

@@ -11,6 +11,7 @@ import com.abeerapps.kmpexpensesplitter.core.domain.config.FeatureFlags
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreateExpenseGroupUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreatePeopleGroupUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseGroupsUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpensesUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveOnboardingStatusUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObservePeopleGroupsUseCase
@@ -45,6 +46,7 @@ internal fun appModule(config: AppConfig): Module = module {
     factoryOf(::ObserveExpenseGroupsUseCase)
     factory { CreateExpenseGroupUseCase(repository = get(), dateProvider = get()) }
     factoryOf(::ObservePeopleGroupsUseCase)
+    factoryOf(::ObserveExpensesUseCase)
     factory { CreatePeopleGroupUseCase(groups = get(), profiles = get(), dateProvider = get()) }
     factoryOf(::ObserveThemePreferenceUseCase)
     // Single: it builds a search index of the whole currency catalog once.

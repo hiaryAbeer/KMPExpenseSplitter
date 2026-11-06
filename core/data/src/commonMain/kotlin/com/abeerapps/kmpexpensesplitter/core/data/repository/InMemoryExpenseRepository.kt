@@ -22,6 +22,14 @@ internal class InMemoryExpenseRepository : ExpenseRepository {
         expenses.update { current -> (listOf(expense) + current).sortedByDescending { it.startDate } }
     }
 
+    override suspend fun updateExpense(expense: Expense) {
+        expenses.update { all -> all.map { if (it.id == expense.id) expense else it }.sortedByDescending { it.startDate } }
+    }
+
+    override suspend fun deleteExpense(expenseId: String) {
+        expenses.update { all -> all.filterNot { it.id == expenseId } }
+    }
+
     override suspend fun deleteExpensesIn(expenseGroupId: String) {
         expenses.update { all -> all.filterNot { it.expenseGroupId == expenseGroupId } }
     }

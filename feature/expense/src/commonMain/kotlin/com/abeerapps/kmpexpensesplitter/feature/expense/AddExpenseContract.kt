@@ -51,6 +51,8 @@ data class AddExpenseUiState(
     val endDate: LocalDate,
     val today: LocalDate,
     val isLoading: Boolean = true,
+    /** The expense being edited ("Edit Expense"), or `null` when adding a new one. */
+    val editingId: String? = null,
     val currency: CurrencyCode = SupportedCurrencies.default.code,
     val expenseGroups: List<ExpenseGroup> = emptyList(),
     /** Whether expense groups have been read once (drives the first-load preselection). */
@@ -91,6 +93,8 @@ data class AddExpenseUiState(
     val payerOptions: List<Participant> get() = group?.members ?: listOfNotNull(you)
 
     val payer: Participant? get() = payerOptions.firstOrNull { it.id == paidBy }
+
+    val isEditing: Boolean get() = editingId != null
 
     val canSave: Boolean get() = !isLoading && !isSaving && errors.isEmpty()
 

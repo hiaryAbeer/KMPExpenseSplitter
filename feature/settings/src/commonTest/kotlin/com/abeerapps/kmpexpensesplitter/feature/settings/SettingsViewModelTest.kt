@@ -70,6 +70,8 @@ class SettingsViewModelTest {
         override suspend fun createGroup(group: PeopleGroup) = Unit
     }
     private val expenses = object : ExpenseRepository {
+        override suspend fun updateExpense(expense: Expense) = Unit
+        override suspend fun deleteExpense(expenseId: String) = Unit
         override suspend fun deleteExpensesIn(expenseGroupId: String) = Unit
         override fun observeExpenses(): Flow<List<Expense>> = MutableStateFlow(emptyList())
         override suspend fun addExpense(expense: Expense) = Unit

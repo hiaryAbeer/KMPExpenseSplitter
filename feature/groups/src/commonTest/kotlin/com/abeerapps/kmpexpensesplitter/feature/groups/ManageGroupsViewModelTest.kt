@@ -219,6 +219,8 @@ class ManageGroupsViewModelTest {
         val items = MutableStateFlow(initial)
         override fun observeExpenses(): Flow<List<Expense>> = items
         override suspend fun addExpense(expense: Expense) { items.value += expense }
+        override suspend fun updateExpense(expense: Expense) = Unit
+        override suspend fun deleteExpense(expenseId: String) = Unit
         override suspend fun deleteExpensesIn(expenseGroupId: String) { items.value = items.value.filterNot { it.expenseGroupId == expenseGroupId } }
     }
 }

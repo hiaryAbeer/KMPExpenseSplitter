@@ -1,6 +1,7 @@
 package com.abeerapps.kmpexpensesplitter.feature.groups.details
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,7 +39,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -95,11 +98,13 @@ object GroupDetailsTestTags {
  * Group Details: header card (members, total), then Expenses / Balances / Stats tabs.
  * The "+" button adds an expense with this expense group preselected.
  *
+ * @param onExpenseClick an expense card tapped (opens Expense Details).
  * @param onAddExpense receives this expense group's id.
  */
 @Composable
 fun GroupDetailsScreen(
     onBack: () -> Unit,
+    onExpenseClick: (expenseId: String) -> Unit,
     onAddExpense: (expenseGroupId: String) -> Unit,
     viewModel: GroupDetailsViewModel = koinViewModel(),
 ) {
@@ -127,7 +132,7 @@ fun GroupDetailsScreen(
             when (uiState.tab) {
                 DetailsTab.Expenses ->
                     if (details.expenses.isEmpty()) NoExpenses()
-                    else DetailsList { expensesByDate(details.expenses, uiState.today) }
+                    else DetailsList { expensesByDate(details.expenses, uiState.today, onExpenseClick) }
                 DetailsTab.Balances ->
                     if (details.expenses.isEmpty()) NoExpenses()
                     else DetailsList { items(details.balances, key = { it.participantId }) { BalanceRow(it) } }
@@ -255,10 +260,10 @@ private fun DetailsList(content: LazyListScope.() -> Unit) {
 }
 
 /** Date headers ("Sat, Apr 25") each followed by that day's expenses. */
-private fun LazyListScope.expensesByDate(expenses: List<ExpenseItem>, today: LocalDate?) {
+private fun LazyListScope.expensesByDate(expenses: List<ExpenseItem>, today: LocalDate?, onClick: (String) -> Unit) {
     expenses.groupBy { it.expense.startDate }.forEach { (date, dayExpenses) ->
         item(key = "date-$date") { DateHeader(date, today) }
-        items(dayExpenses, key = { it.expense.id }) { ExpenseRow(it) }
+        items(dayExpenses, key = { it.expense.id }) { ExpenseRow(it, onClick = { onClick(it.expense.id) }) }
     }
 }
 
@@ -288,9 +293,14 @@ private fun DateHeader(date: LocalDate, today: LocalDate?) {
 
 /** Category icon, title and "Paid by …", amount on the right. */
 @Composable
-private fun ExpenseRow(item: ExpenseItem) {
+private fun ExpenseRow(item: ExpenseItem, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
-    AppCard(Modifier.fillMaxWidth()) {
+    AppCard(
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .clickable(onClick = onClick, role = Role.Button),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             CategoryIcon(item.expense.category.icon)
             Spacer(Modifier.width(ExpenseSplitterTheme.spacing.smd))

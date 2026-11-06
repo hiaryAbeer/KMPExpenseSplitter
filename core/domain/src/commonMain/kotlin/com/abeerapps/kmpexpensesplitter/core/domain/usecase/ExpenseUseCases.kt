@@ -2,6 +2,7 @@ package com.abeerapps.kmpexpensesplitter.core.domain.usecase
 
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Expense
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseCategory
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseDetails
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseShare
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
@@ -9,7 +10,11 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitCalculator
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitError
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitInput
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.PeopleGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.datetime.LocalDate
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -54,7 +59,8 @@ sealed interface AddExpenseResult {
 }
 
 /**
- * Validates an [ExpenseDraft], computes the shares and stores the expense.
+ * Validates an [ExpenseDraft], computes the shares and stores the expense: a new
+ * one, or an existing one when editing (same id, so it stays in its place).
  *
  * [validate] is exposed so the UI can enable "Save" with exactly the same rules
  * that [invoke] enforces.
@@ -87,14 +93,15 @@ class AddExpenseUseCase(
         }
     }.distinct()
 
-    suspend operator fun invoke(draft: ExpenseDraft): AddExpenseResult {
+    /** @param editingId the expense being edited, or `null` to add a new one. */
+    suspend operator fun invoke(draft: ExpenseDraft, editingId: String? = null): AddExpenseResult {
         val errors = validate(draft)
         if (errors.isNotEmpty()) return AddExpenseResult.Invalid(errors)
 
         val shares: List<ExpenseShare> =
             (SplitCalculator.split(draft.amount, draft.split) as SplitCalculator.Result.Success).shares
         val expense = Expense(
-            id = newId(),
+            id = editingId ?: newId(),
             expenseGroupId = requireNotNull(draft.expenseGroupId),
             peopleGroupId = requireNotNull(draft.peopleGroupId),
             title = draft.title.trim(),
@@ -108,7 +115,7 @@ class AddExpenseUseCase(
             note = draft.note.trim().ifEmpty { null },
         )
         return try {
-            repository.addExpense(expense)
+            if (editingId == null) repository.addExpense(expense) else repository.updateExpense(expense)
             AddExpenseResult.Success(expense)
         } catch (e: CancellationException) {
             throw e
@@ -127,4 +134,33 @@ class AddExpenseUseCase(
         @OptIn(ExperimentalUuidApi::class)
         fun randomId(): String = Uuid.random().toString()
     }
+}
+
+/** Deletes one expense (the UI asks for confirmation first). */
+class DeleteExpenseUseCase(private val repository: ExpenseRepository) {
+    suspend operator fun invoke(expenseId: String): DeleteResult = try {
+        repository.deleteExpense(expenseId)
+        DeleteResult.Deleted
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        DeleteResult.StorageError
+    }
+}
+
+/**
+ * Emits one expense with the names of its payer and of everyone sharing it, or
+ * `null` once it no longer exists (e.g. it was deleted).
+ */
+class ObserveExpenseDetailsUseCase(
+    private val expenses: ExpenseRepository,
+    private val peopleGroups: PeopleGroupRepository,
+    private val profiles: UserProfileRepository,
+) {
+    operator fun invoke(expenseId: String): Flow<ExpenseDetails?> =
+        combine(expenses.observeExpenses(), peopleGroups.observeGroups(), profiles.observeProfile()) { all, groups, profile ->
+            all.firstOrNull { it.id == expenseId }?.let { expense ->
+                ExpenseDetails.build(expense, groups.withYourName(profile?.name).firstOrNull { it.id == expense.peopleGroupId })
+            }
+        }
 }

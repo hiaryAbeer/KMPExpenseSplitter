@@ -69,6 +69,8 @@ class GroupDetailsViewModelTest {
             ),
         )
         override suspend fun addExpense(expense: Expense) = Unit
+        override suspend fun updateExpense(expense: Expense) = Unit
+        override suspend fun deleteExpense(expenseId: String) = Unit
         override suspend fun deleteExpensesIn(expenseGroupId: String) = Unit
     }
     private val profiles = object : UserProfileRepository {

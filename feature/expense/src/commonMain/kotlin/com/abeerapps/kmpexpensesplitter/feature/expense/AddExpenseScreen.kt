@@ -79,6 +79,8 @@ import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_sa
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_save_failed
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_title
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_title_placeholder
+import com.abeerapps.kmpexpensesplitter.feature.expense.resources.edit_expense_save
+import com.abeerapps.kmpexpensesplitter.feature.expense.resources.edit_expense_title
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -143,7 +145,7 @@ fun AddExpenseContent(
     ) {
         Column(Modifier.fillMaxSize()) {
             AppTopBar(
-                title = stringResource(Res.string.add_expense_title),
+                title = stringResource(if (uiState.isEditing) Res.string.edit_expense_title else Res.string.add_expense_title),
                 onBack = onBack,
                 backDescription = stringResource(Res.string.add_expense_back),
             )
@@ -302,7 +304,12 @@ private fun FormContent(uiState: AddExpenseUiState, onAction: (AddExpenseAction)
         )
     }
 
-    SaveButton(enabled = uiState.canSave, isSaving = uiState.isSaving, onClick = { onAction(AddExpenseAction.SaveClicked) })
+    SaveButton(
+        text = stringResource(if (uiState.isEditing) Res.string.edit_expense_save else Res.string.add_expense_save),
+        enabled = uiState.canSave,
+        isSaving = uiState.isSaving,
+        onClick = { onAction(AddExpenseAction.SaveClicked) },
+    )
 }
 
 /** A labelled block of the form: label, then [content] [contentGap] below it. */
@@ -324,10 +331,10 @@ private fun Section(
  * (transparent with a hairline border), so it reads as "not ready yet".
  */
 @Composable
-private fun SaveButton(enabled: Boolean, isSaving: Boolean, onClick: () -> Unit) {
+private fun SaveButton(text: String, enabled: Boolean, isSaving: Boolean, onClick: () -> Unit) {
     val shape = MaterialTheme.shapes.large
     PrimaryButton(
-        text = stringResource(Res.string.add_expense_save),
+        text = text,
         onClick = onClick,
         enabled = enabled || isSaving,
         isLoading = isSaving,

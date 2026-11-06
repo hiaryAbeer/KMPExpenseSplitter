@@ -101,6 +101,17 @@ card (name, people involved, total spent) and three tabs, built from `ExpenseGro
 The floating "+" opens Add Expense with this expense group preselected (route argument
 `expenseGroupId`). If the group is deleted elsewhere, the screen closes itself.
 
+### Expense Details
+
+Tapping an expense in Group Details opens `ExpenseDetailsScreen` (`:feature:expense`): header
+(category, title, date or date range, amount), **Paid By**, **Split Between** with each share, then:
+
+- **Edit**: opens the expense form ("Edit Expense") filled with the expense (route argument
+  `expenseId`). Percentages aren't stored, so they are derived from the shares (adjusted to total
+  100%). "Save Changes" updates the same expense (same id) via `AddExpenseUseCase(draft, editingId)`.
+- **Delete**: confirmation sheet, then `DeleteExpenseUseCase`. The screen closes when the expense
+  no longer exists (deleted here or elsewhere).
+
 ### Manage expense groups / people groups
 
 Opened from the Groups tab header. Each has a search field, the list with **edit** and **delete**

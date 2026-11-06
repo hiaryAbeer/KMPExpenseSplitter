@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.abeerapps.kmpexpensesplitter.core.domain.config.DateProvider
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseShare
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Expense
@@ -19,6 +21,7 @@ import com.abeerapps.kmpexpensesplitter.core.domain.usecase.AddExpenseUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreateExpenseGroupUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreatePeopleGroupUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseGroupsUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpensesUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ExpenseDraftError
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.MemberNameError
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObservePeopleGroupsUseCase
@@ -70,6 +73,7 @@ class AddExpenseViewModelTest {
         observeGroupList = ObservePeopleGroupsUseCase(groups, profiles),
         observeUserProfile = ObserveUserProfileUseCase(profiles),
         addExpense = AddExpenseUseCase(expenses, newId = { "e1" }),
+        observeExpenses = ObserveExpensesUseCase(expenses),
         createGroup = CreatePeopleGroupUseCase(groups, profiles, dateProvider, newId = { "n${nextId++}" }),
         dateProvider = dateProvider,
         savedStateHandle = savedState,
@@ -314,6 +318,54 @@ class AddExpenseViewModelTest {
         assertEquals(today to today, vm.uiState.value.let { it.startDate to it.endDate })
     }
 
+    /** A stored 30.00 expense in Aqaba / Trip, split by percentage: you 60%, Sara 40%. */
+    private fun storedExpense() = Expense(
+        id = "old", expenseGroupId = aqaba.id, peopleGroupId = trip.id, title = "Boat", amount = Money(30_00, usd),
+        category = ExpenseCategory.Entertainment, paidBy = sara.id, splitType = SplitType.Percentage,
+        shares = listOf(ExpenseShare(you.id, Money(18_00, usd)), ExpenseShare(sara.id, Money(12_00, usd))),
+        startDate = LocalDate(2026, 4, 20), endDate = LocalDate(2026, 4, 21), note = "Sunset",
+    )
+
+    @Test
+    fun `editing fills the form from the stored expense`() {
+        groups.groups.value = listOf(trip)
+        expenses.stored += storedExpense()
+
+        val state = viewModel(SavedStateHandle(mapOf(AddExpenseViewModel.ARG_EXPENSE_ID to "old"))).uiState.value
+
+        assertTrue(state.isEditing)
+        assertEquals("Boat", state.title)
+        assertEquals("30.00", state.amount)
+        assertEquals(ExpenseCategory.Entertainment, state.category)
+        assertEquals(aqaba.id, state.expenseGroupId)
+        assertEquals(trip, state.group)
+        assertEquals(sara.id, state.paidBy)
+        assertEquals(SplitType.Percentage, state.splitType)
+        assertEquals("60.00", state.shareInput(you.id))
+        assertEquals("40.00", state.shareInput(sara.id))
+        assertEquals(LocalDate(2026, 4, 20) to LocalDate(2026, 4, 21), state.startDate to state.endDate)
+        assertEquals("Sunset", state.note)
+        assertTrue(state.canSave)
+    }
+
+    @Test
+    fun `saving an edit updates the same expense`() = runTest {
+        groups.groups.value = listOf(trip)
+        expenses.stored += storedExpense()
+        val vm = viewModel(SavedStateHandle(mapOf(AddExpenseViewModel.ARG_EXPENSE_ID to "old")))
+
+        vm.onAction(AddExpenseAction.TitleChanged("Boat trip"))
+        vm.events.test {
+            vm.onAction(AddExpenseAction.SaveClicked)
+            assertEquals(AddExpenseEvent.Saved, awaitItem())
+        }
+
+        val saved = expenses.stored.single()
+        assertEquals("old", saved.id)
+        assertEquals("Boat trip", saved.title)
+        assertEquals(listOf(18_00L, 12_00L), saved.shares.map { it.amount.minorUnits })
+    }
+
     @Test
     fun `opening from a group's details preselects that expense group`() {
         trips.groups.value = listOf(ExpenseGroup("t2", "Newer", today), aqaba)
@@ -447,6 +499,11 @@ class AddExpenseViewModelTest {
     }
 
     private class FakeExpenses : ExpenseRepository {
+        override suspend fun updateExpense(expense: Expense) {
+            val index = stored.indexOfFirst { it.id == expense.id }
+            if (index >= 0) stored[index] = expense
+        }
+        override suspend fun deleteExpense(expenseId: String) = Unit
         override suspend fun deleteExpensesIn(expenseGroupId: String) = Unit
         val stored = mutableListOf<Expense>()
         var fail = false

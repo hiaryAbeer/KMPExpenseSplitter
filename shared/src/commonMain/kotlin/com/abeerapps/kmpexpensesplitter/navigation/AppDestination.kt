@@ -18,11 +18,16 @@ sealed interface AppDestination {
     data object Home : AppDestination
 
     /**
-     * "Add Expense", from the "+" buttons. [expenseGroupId] preselects that expense
-     * group (from Group Details); the name matches `AddExpenseViewModel.ARG_EXPENSE_GROUP_ID`.
+     * The expense form. [expenseGroupId] preselects that expense group (from Group
+     * Details); [expenseId] edits that expense instead of adding one ("Edit Expense").
+     * Names match `AddExpenseViewModel.ARG_EXPENSE_GROUP_ID` / `ARG_EXPENSE_ID`.
      */
     @Serializable
-    data class AddExpense(val expenseGroupId: String? = null) : AppDestination
+    data class AddExpense(val expenseGroupId: String? = null, val expenseId: String? = null) : AppDestination
+
+    /** One expense: payer, shares, Edit and Delete. [expenseId] matches `ExpenseDetailsViewModel.ARG_EXPENSE_ID`. */
+    @Serializable
+    data class ExpenseDetails(val expenseId: String) : AppDestination
 
     /** Search, add, rename and delete expense groups (from the Groups tab header). */
     @Serializable

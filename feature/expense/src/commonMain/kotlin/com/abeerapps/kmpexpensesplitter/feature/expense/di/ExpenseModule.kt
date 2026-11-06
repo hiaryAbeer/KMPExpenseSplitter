@@ -1,7 +1,11 @@
 package com.abeerapps.kmpexpensesplitter.feature.expense.di
 
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.AddExpenseUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.DeleteExpenseUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseDetailsUseCase
 import com.abeerapps.kmpexpensesplitter.feature.expense.AddExpenseViewModel
+import com.abeerapps.kmpexpensesplitter.feature.expense.details.ExpenseDetailsViewModel
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -11,5 +15,8 @@ import org.koin.dsl.module
  */
 val expenseModule = module {
     factory { AddExpenseUseCase(repository = get()) }
+    factoryOf(::DeleteExpenseUseCase)
+    factoryOf(::ObserveExpenseDetailsUseCase)
     viewModelOf(::AddExpenseViewModel)
+    viewModelOf(::ExpenseDetailsViewModel)
 }

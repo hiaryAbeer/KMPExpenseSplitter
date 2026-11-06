@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.abeerapps.kmpexpensesplitter.feature.expense.AddExpenseScreen
+import com.abeerapps.kmpexpensesplitter.feature.expense.details.ExpenseDetailsScreen
 import com.abeerapps.kmpexpensesplitter.feature.groups.details.GroupDetailsScreen
 import com.abeerapps.kmpexpensesplitter.feature.groups.manage.ManageExpenseGroupsScreen
 import com.abeerapps.kmpexpensesplitter.feature.groups.manage.ManagePeopleGroupsScreen
@@ -69,6 +70,14 @@ fun AppNavHost(
         composable<AppDestination.AddExpense> {
             AddExpenseScreen(onBack = navController::navigateUp, onSaved = navController::navigateUp)
         }
+        composable<AppDestination.ExpenseDetails> {
+            ExpenseDetailsScreen(
+                onBack = navController::navigateUp,
+                onEdit = { expenseId ->
+                    navController.navigate(AppDestination.AddExpense(expenseId = expenseId)) { launchSingleTop = true }
+                },
+            )
+        }
         composable<AppDestination.ManageExpenseGroups> {
             ManageExpenseGroupsScreen(onBack = navController::navigateUp)
         }
@@ -78,6 +87,9 @@ fun AppNavHost(
         composable<AppDestination.GroupDetails> {
             GroupDetailsScreen(
                 onBack = navController::navigateUp,
+                onExpenseClick = { expenseId ->
+                    navController.navigate(AppDestination.ExpenseDetails(expenseId)) { launchSingleTop = true }
+                },
                 onAddExpense = { groupId ->
                     navController.navigate(AppDestination.AddExpense(expenseGroupId = groupId)) { launchSingleTop = true }
                 },

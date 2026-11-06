@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="add_expense_title">Add Expense</string>
+    <string name="edit_expense_title">Edit Expense</string>
+    <string name="edit_expense_save">Save Changes</string>
+    <string name="expense_details_title">Expense Details</string>
+    <string name="expense_details_edit">Edit</string>
+    <string name="expense_details_delete">Delete</string>
+    <!-- %1$s = expense title -->
+    <string name="expense_details_delete_title">Delete “%1$s”?</string>
+    <string name="expense_details_delete_message">This can’t be undone.</string>
+    <string name="expense_details_delete_failed">Couldn’t delete the expense. Please try again.</string>
     <string name="add_expense_back">Back</string>
 
     <string name="add_expense_label_title">Title</string>

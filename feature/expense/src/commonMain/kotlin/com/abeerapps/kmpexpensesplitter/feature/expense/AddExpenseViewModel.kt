@@ -21,6 +21,7 @@ import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreatePeopleGroupRes
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreatePeopleGroupUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ExpenseDraft
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseGroupsUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpensesUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObservePeopleGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveUserProfileUseCase
 import com.abeerapps.kmpexpensesplitter.core.ui.PeopleGroupForm
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -50,6 +52,7 @@ class AddExpenseViewModel(
     observeGroupList: ObservePeopleGroupsUseCase,
     observeUserProfile: ObserveUserProfileUseCase,
     private val addExpense: AddExpenseUseCase,
+    private val observeExpenses: ObserveExpensesUseCase,
     private val createGroup: CreatePeopleGroupUseCase,
     dateProvider: DateProvider,
     savedStateHandle: SavedStateHandle,
@@ -57,6 +60,9 @@ class AddExpenseViewModel(
 
     /** Set when opened from a group's details: that expense group is preselected. */
     private val requestedExpenseGroupId: String? = savedStateHandle[ARG_EXPENSE_GROUP_ID]
+
+    /** Set when opened from "Edit" on Expense Details: the form is filled with that expense. */
+    private val editExpenseId: String? = savedStateHandle[ARG_EXPENSE_ID]
 
     private val _uiState = MutableStateFlow(
         dateProvider.today().let { today -> AddExpenseUiState(startDate = today, endDate = today, today = today) },
@@ -67,6 +73,7 @@ class AddExpenseViewModel(
     val events: Flow<AddExpenseEvent> = _events.receiveAsFlow()
 
     init {
+        editExpenseId?.let(::prefillFrom)
         viewModelScope.launch {
             observeExpenseGroups().collect { trips ->
                 updateForm { state ->
@@ -244,12 +251,61 @@ class AddExpenseViewModel(
         }
     }
 
+    /**
+     * Edit mode: once groups are loaded (so the first-load defaults have run), fills
+     * every field from the stored expense. Percentages aren't stored, so they are
+     * derived from the shares and adjusted to total exactly 100%.
+     */
+    private fun prefillFrom(expenseId: String) {
+        viewModelScope.launch {
+            _uiState.first { !it.isLoading && it.expenseGroupsLoaded }
+            val expense = observeExpenses().first().firstOrNull { it.id == expenseId } ?: return@launch
+            updateForm { state ->
+                val group = state.groups.firstOrNull { it.id == expense.peopleGroupId }
+                val withGroup = state.withGroup(group)
+                val shareIds = expense.shares.mapTo(LinkedHashSet()) { it.participantId }
+                val inputs: Map<String, String> = when (expense.splitType) {
+                    SplitType.Equal -> emptyMap()
+                    SplitType.Exact -> expense.shares.associate { it.participantId to it.amount.minorUnits.toInput() }
+                    SplitType.Percentage -> percentagesOf(expense).mapValues { (_, hundredths) -> hundredths.toInput() }
+                }
+                withGroup.copy(
+                    editingId = expense.id,
+                    title = expense.title,
+                    amount = expense.amount.minorUnits.toInput(),
+                    category = expense.category,
+                    expenseGroupId = expense.expenseGroupId,
+                    startDate = expense.startDate,
+                    endDate = expense.endDate,
+                    note = expense.note.orEmpty(),
+                    paidBy = expense.paidBy,
+                    splitType = expense.splitType,
+                    selected = shareIds.filterTo(LinkedHashSet()) { id -> withGroup.participants.any { it.id == id } },
+                    shareInputs = if (inputs.isEmpty()) emptyMap() else mapOf(expense.splitType to inputs),
+                )
+            }
+        }
+    }
+
+    /** Share of each person in hundredths of a percent, summing to exactly 10_000. */
+    private fun percentagesOf(expense: Expense): Map<String, Long> {
+        val total = expense.amount.minorUnits
+        if (total == 0L) return emptyMap()
+        val raw = expense.shares.associate { it.participantId to (it.amount.minorUnits * 10_000 + total / 2) / total }
+        val diff = 10_000 - raw.values.sum()
+        val last = expense.shares.last().participantId
+        return raw + (last to raw.getValue(last) + diff)
+    }
+
+    /** Hundredths as the text a user would type: 1250 → "12.50". */
+    private fun Long.toInput(): String = "${this / 100}.${(this % 100).toString().padStart(2, '0')}"
+
     private fun save() {
         val state = _uiState.value
         if (!state.canSave) return
         _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
-            when (val result = addExpense(state.toDraft())) {
+            when (val result = addExpense(state.toDraft(), editingId = state.editingId)) {
                 is AddExpenseResult.Success -> _events.send(AddExpenseEvent.Saved)
                 is AddExpenseResult.Invalid -> _uiState.update { it.copy(isSaving = false, errors = result.errors) }
                 AddExpenseResult.StorageError ->
@@ -312,5 +368,8 @@ class AddExpenseViewModel(
     companion object {
         /** Navigation argument: the expense group to preselect (the route's `expenseGroupId`). */
         const val ARG_EXPENSE_GROUP_ID = "expenseGroupId"
+
+        /** Navigation argument: the expense to edit (the route's `expenseId`). */
+        const val ARG_EXPENSE_ID = "expenseId"
     }
 }
