@@ -29,12 +29,6 @@
     <string name="add_expense_label_amount">Amount</string>
     <string name="add_expense_amount_placeholder">0.00</string>
     <string name="add_expense_label_category">Category</string>
-    <string name="category_food">Food</string>
-    <string name="category_transport">Transport</string>
-    <string name="category_hotel">Hotel</string>
-    <string name="category_bills">Bills</string>
-    <string name="category_shopping">Shopping</string>
-    <string name="category_entertainment">Entertainment</string>
 
     <string name="add_expense_label_paid_by">Paid By</string>
     <string name="add_expense_paid_by_sheet_title">Who paid?</string>

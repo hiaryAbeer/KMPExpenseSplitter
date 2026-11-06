@@ -17,9 +17,12 @@ sealed interface AppDestination {
     @Serializable
     data object Home : AppDestination
 
-    /** "Add Expense", opened from the Home "+" button. */
+    /**
+     * "Add Expense", from the "+" buttons. [expenseGroupId] preselects that expense
+     * group (from Group Details); the name matches `AddExpenseViewModel.ARG_EXPENSE_GROUP_ID`.
+     */
     @Serializable
-    data object AddExpense : AppDestination
+    data class AddExpense(val expenseGroupId: String? = null) : AppDestination
 
     /** Search, add, rename and delete expense groups (from the Groups tab header). */
     @Serializable
@@ -29,7 +32,7 @@ sealed interface AppDestination {
     @Serializable
     data object ManagePeopleGroups : AppDestination
 
-    /** Placeholder until group details are built. */
+    /** An expense group's expenses, balances and stats. [groupId] matches `GroupDetailsViewModel.ARG_GROUP_ID`. */
     @Serializable
     data class GroupDetails(val groupId: String) : AppDestination
 }

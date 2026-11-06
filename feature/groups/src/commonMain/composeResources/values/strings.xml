@@ -51,4 +51,22 @@
     <string name="manage_save_failed">Couldn’t save. Please try again.</string>
     <string name="manage_delete_failed">Couldn’t delete. Please try again.</string>
     <string name="manage_member_in_use">People used in expenses can’t be removed.</string>
+
+    <!-- Group Details -->
+    <string name="details_title">Group Details</string>
+    <string name="details_total_spent">Total Spent</string>
+    <string name="details_tab_expenses">Expenses</string>
+    <string name="details_tab_balances">Balances</string>
+    <string name="details_tab_stats">Stats</string>
+    <!-- %1$s = payer name -->
+    <string name="details_paid_by">Paid by %1$s</string>
+    <string name="details_add_expense">Add expense</string>
+    <string name="details_empty_title">No expenses yet</string>
+    <string name="details_empty_message">Add the first expense to this group.</string>
+    <!-- %1$s = amount -->
+    <string name="details_gets_back">Gets back %1$s</string>
+    <string name="details_owes">Owes %1$s</string>
+    <string name="details_settled">Settled</string>
+    <!-- %1$d = percentage of total spending. A single % (Compose resources do not unescape %%). -->
+    <string name="details_share_percent">%1$d% of total</string>
 </resources>

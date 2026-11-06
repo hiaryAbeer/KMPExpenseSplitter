@@ -1,5 +1,6 @@
 package com.abeerapps.kmpexpensesplitter.feature.expense
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abeerapps.kmpexpensesplitter.core.domain.config.DateProvider
@@ -51,7 +52,11 @@ class AddExpenseViewModel(
     private val addExpense: AddExpenseUseCase,
     private val createGroup: CreatePeopleGroupUseCase,
     dateProvider: DateProvider,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+    /** Set when opened from a group's details: that expense group is preselected. */
+    private val requestedExpenseGroupId: String? = savedStateHandle[ARG_EXPENSE_GROUP_ID]
 
     private val _uiState = MutableStateFlow(
         dateProvider.today().let { today -> AddExpenseUiState(startDate = today, endDate = today, today = today) },
@@ -68,8 +73,10 @@ class AddExpenseViewModel(
                     val firstLoad = !state.expenseGroupsLoaded
                     val next = state.copy(expenseGroups = trips, expenseGroupsLoaded = true)
                     when {
-                        // Like people groups: preselect the first (newest) expense group.
-                        firstLoad && next.expenseGroupId == null -> next.copy(expenseGroupId = trips.firstOrNull()?.id)
+                        // Preselect the requested expense group, else the first (newest), like people groups.
+                        firstLoad && next.expenseGroupId == null -> next.copy(
+                            expenseGroupId = trips.firstOrNull { it.id == requestedExpenseGroupId }?.id ?: trips.firstOrNull()?.id,
+                        )
                         // The selected one was removed (e.g. data cleared).
                         next.expenseGroupId != null && next.expenseGroup == null -> next.copy(expenseGroupId = null)
                         else -> next
@@ -300,5 +307,10 @@ class AddExpenseViewModel(
             note = note,
             participants = payerOptions,
         )
+    }
+
+    companion object {
+        /** Navigation argument: the expense group to preselect (the route's `expenseGroupId`). */
+        const val ARG_EXPENSE_GROUP_ID = "expenseGroupId"
     }
 }

@@ -63,26 +63,16 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseCategory
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
+import com.abeerapps.kmpexpensesplitter.core.ui.icon
+import com.abeerapps.kmpexpensesplitter.core.ui.label
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.Res
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_amount_placeholder
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_paid_by_sheet_title
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.category_bills
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.category_entertainment
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.category_food
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.category_hotel
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.category_shopping
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.category_transport
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.date_sheet_done
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.date_sheet_hint
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.date_sheet_title
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.date_today
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.date_yesterday
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.ic_category_bills
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.ic_category_entertainment
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.ic_category_food
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.ic_category_hotel
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.ic_category_shopping
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.ic_category_transport
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.split_equal
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.split_equal_hint
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.split_exact
@@ -96,7 +86,6 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.minus
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -574,26 +563,6 @@ private const val MILLIS_PER_DAY = 86_400_000L
 private fun LocalDate.toUtcMillis(): Long = toEpochDays() * MILLIS_PER_DAY
 
 private fun Long.toLocalDate(): LocalDate = LocalDate.fromEpochDays(this / MILLIS_PER_DAY)
-
-private val ExpenseCategory.icon: DrawableResource
-    get() = when (this) {
-        ExpenseCategory.Food -> Res.drawable.ic_category_food
-        ExpenseCategory.Transport -> Res.drawable.ic_category_transport
-        ExpenseCategory.Hotel -> Res.drawable.ic_category_hotel
-        ExpenseCategory.Bills -> Res.drawable.ic_category_bills
-        ExpenseCategory.Shopping -> Res.drawable.ic_category_shopping
-        ExpenseCategory.Entertainment -> Res.drawable.ic_category_entertainment
-    }
-
-private val ExpenseCategory.label: StringResource
-    get() = when (this) {
-        ExpenseCategory.Food -> Res.string.category_food
-        ExpenseCategory.Transport -> Res.string.category_transport
-        ExpenseCategory.Hotel -> Res.string.category_hotel
-        ExpenseCategory.Bills -> Res.string.category_bills
-        ExpenseCategory.Shopping -> Res.string.category_shopping
-        ExpenseCategory.Entertainment -> Res.string.category_entertainment
-    }
 
 private val SplitType.label: StringResource
     get() = when (this) {

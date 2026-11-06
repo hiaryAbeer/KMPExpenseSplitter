@@ -3,10 +3,15 @@ package com.abeerapps.kmpexpensesplitter.core.domain.usecase
 import com.abeerapps.kmpexpensesplitter.core.domain.config.DateProvider
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Expense
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroupDetails
+import com.abeerapps.kmpexpensesplitter.core.domain.model.SupportedCurrencies
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.PeopleGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -119,4 +124,32 @@ class DeleteExpenseGroupUseCase(
 /** Emits every expense (used by the manage screens to show usage). */
 class ObserveExpensesUseCase(private val repository: ExpenseRepository) {
     operator fun invoke(): Flow<List<Expense>> = repository.observeExpenses()
+}
+
+/**
+ * Emits the details of one expense group (expenses, balances, stats), or `null`
+ * once it no longer exists (e.g. it was deleted). Recomputed on any change.
+ */
+class ObserveExpenseGroupDetailsUseCase(
+    private val expenseGroups: ExpenseGroupRepository,
+    private val peopleGroups: PeopleGroupRepository,
+    private val expenses: ExpenseRepository,
+    private val profiles: UserProfileRepository,
+) {
+    operator fun invoke(expenseGroupId: String): Flow<ExpenseGroupDetails?> =
+        combine(
+            expenseGroups.observeExpenseGroups(),
+            peopleGroups.observeGroups(),
+            expenses.observeExpenses(),
+            profiles.observeProfile(),
+        ) { trips, people, spent, profile ->
+            trips.firstOrNull { it.id == expenseGroupId }?.let { group ->
+                ExpenseGroupDetails.build(
+                    group = group,
+                    peopleGroups = people.withYourName(profile?.name),
+                    allExpenses = spent,
+                    currency = profile?.defaultCurrency ?: SupportedCurrencies.default.code,
+                )
+            }
+        }
 }

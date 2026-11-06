@@ -87,6 +87,20 @@ search field (matches the expense group name), filter chips and the list of ever
   exist but none match: "No groups found".
 - The "+" button opens Add Expense, as on Home.
 
+### Group Details
+
+Tapping a group card (Home or Groups tab) opens `GroupDetailsScreen` (`:feature:groups`): a header
+card (name, people involved, total spent) and three tabs, built from `ExpenseGroupDetails` (domain):
+
+- **Expenses**: grouped by date ("Sat, Apr 25"), newest first, with category icon, "Paid by …"
+  and amount.
+- **Balances**: each person's paid − shares across the group's expenses ("Gets back" / "Owes" /
+  "Settled"); balances always sum to zero.
+- **Stats**: spending per category with its share of the total.
+
+The floating "+" opens Add Expense with this expense group preselected (route argument
+`expenseGroupId`). If the group is deleted elsewhere, the screen closes itself.
+
 ### Manage expense groups / people groups
 
 Opened from the Groups tab header. Each has a search field, the list with **edit** and **delete**

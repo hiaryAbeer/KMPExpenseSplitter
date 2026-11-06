@@ -1,5 +1,6 @@
 package com.abeerapps.kmpexpensesplitter.feature.expense
 
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.abeerapps.kmpexpensesplitter.core.domain.config.DateProvider
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
@@ -63,7 +64,7 @@ class AddExpenseViewModelTest {
 
     private val dateProvider = DateProvider { today }
 
-    private fun viewModel() = AddExpenseViewModel(
+    private fun viewModel(savedState: SavedStateHandle = SavedStateHandle()) = AddExpenseViewModel(
         observeExpenseGroups = ObserveExpenseGroupsUseCase(trips),
         createExpenseGroup = CreateExpenseGroupUseCase(trips, dateProvider, newId = { "t${nextId++}" }),
         observeGroupList = ObservePeopleGroupsUseCase(groups, profiles),
@@ -71,6 +72,7 @@ class AddExpenseViewModelTest {
         addExpense = AddExpenseUseCase(expenses, newId = { "e1" }),
         createGroup = CreatePeopleGroupUseCase(groups, profiles, dateProvider, newId = { "n${nextId++}" }),
         dateProvider = dateProvider,
+        savedStateHandle = savedState,
     )
 
     /** A valid form for a one-person split, so share inputs are easy to reason about. */
@@ -310,6 +312,13 @@ class AddExpenseViewModelTest {
         assertEquals(LocalDate(2026, 4, 28) to today, vm.uiState.value.let { it.startDate to it.endDate })
         vm.onAction(AddExpenseAction.DateRangeSelected(LocalDate(2026, 5, 3), null))
         assertEquals(today to today, vm.uiState.value.let { it.startDate to it.endDate })
+    }
+
+    @Test
+    fun `opening from a group's details preselects that expense group`() {
+        trips.groups.value = listOf(ExpenseGroup("t2", "Newer", today), aqaba)
+        val vm = viewModel(SavedStateHandle(mapOf(AddExpenseViewModel.ARG_EXPENSE_GROUP_ID to aqaba.id)))
+        assertEquals(aqaba.id, vm.uiState.value.expenseGroupId)
     }
 
     @Test

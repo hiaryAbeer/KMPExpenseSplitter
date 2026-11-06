@@ -31,4 +31,10 @@
     <string name="people_group_member_in_use">In expenses</string>
     <string name="group_save">Save</string>
     <string name="edit_expense_group_title">Edit expense group</string>
+    <string name="category_food">Food</string>
+    <string name="category_transport">Transport</string>
+    <string name="category_hotel">Hotel</string>
+    <string name="category_bills">Bills</string>
+    <string name="category_shopping">Shopping</string>
+    <string name="category_entertainment">Entertainment</string>
 </resources>

@@ -118,7 +118,7 @@ fun GroupCard(
 
 /** Up to 3 overlapping initials, then a "+N" bubble for the rest. */
 @Composable
-private fun AvatarStack(names: List<String>, modifier: Modifier = Modifier) {
+fun AvatarStack(names: List<String>, modifier: Modifier = Modifier) {
     val colors = ExpenseSplitterTheme.extendedColors
     val visible = if (names.size > MAX_VISIBLE_AVATARS) names.take(MAX_VISIBLE_AVATARS) else names
     val overflow = names.size - visible.size
