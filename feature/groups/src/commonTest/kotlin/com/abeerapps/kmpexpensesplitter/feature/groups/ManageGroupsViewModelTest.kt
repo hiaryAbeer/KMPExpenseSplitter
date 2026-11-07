@@ -93,7 +93,7 @@ class ManageGroupsViewModelTest {
         observeExpenses = ObserveExpensesUseCase(expenses),
         createExpenseGroup = CreateExpenseGroupUseCase(trips, dateProvider, newId = { "n${nextId++}" }),
         renameExpenseGroup = RenameExpenseGroupUseCase(trips),
-        deleteExpenseGroup = DeleteExpenseGroupUseCase(trips, expenses),
+        deleteExpenseGroup = DeleteExpenseGroupUseCase(trips, expenses, FakeSettlementRepository()),
     )
 
     private fun peopleGroupsVm() = ManagePeopleGroupsViewModel(

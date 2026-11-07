@@ -30,6 +30,7 @@ object GroupSummaries {
      * @param peopleGroups used to name the people involved in each expense group.
      * @param currency only expenses in this currency are counted, so totals never mix
      *   currencies (until currency conversion exists).
+     * @param settlements recorded payments; they move your balance like expenses do.
      * @return summaries, most recently active first (latest expense end date, else creation date).
      */
     fun build(
@@ -37,9 +38,11 @@ object GroupSummaries {
         peopleGroups: List<PeopleGroup>,
         expenses: List<Expense>,
         currency: CurrencyCode,
+        settlements: List<Settlement> = emptyList(),
     ): List<GroupSummary> {
         val peopleById = peopleGroups.associateBy { it.id }
         val byGroup = expenses.filter { it.amount.currency == currency }.groupBy { it.expenseGroupId }
+        val settledByGroup = settlements.filter { it.amount.currency == currency }.groupBy { it.expenseGroupId }
         return expenseGroups
             .map { group ->
                 val groupExpenses = byGroup[group.id].orEmpty()
@@ -53,7 +56,11 @@ object GroupSummaries {
                         .distinctBy { it.id }
                         .map { it.name },
                     totalSpent = Money(groupExpenses.sumOf { it.amount.minorUnits }, currency),
-                    yourBalance = Money(groupExpenses.sumOf { it.yourBalanceChange() }, currency),
+                    yourBalance = Money(
+                        groupExpenses.sumOf { it.yourBalanceChange() } +
+                            settledByGroup[group.id].orEmpty().sumOf { it.yourBalanceChange() },
+                        currency,
+                    ),
                     lastActivity = lastActivity,
                 )
             }
@@ -66,5 +73,12 @@ object GroupSummaries {
         val paid = if (paidBy == Participant.YOU_ID) amount.minorUnits else 0L
         val owed = shares.filter { it.participantId == Participant.YOU_ID }.sumOf { it.amount.minorUnits }
         return paid - owed
+    }
+
+    /** Paying moves your balance up (you owe less); receiving moves it down. */
+    private fun Settlement.yourBalanceChange(): Long = when (Participant.YOU_ID) {
+        fromId -> amount.minorUnits
+        toId -> -amount.minorUnits
+        else -> 0L
     }
 }

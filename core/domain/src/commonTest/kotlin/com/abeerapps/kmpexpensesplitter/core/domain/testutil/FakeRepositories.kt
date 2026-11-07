@@ -3,9 +3,11 @@ package com.abeerapps.kmpexpensesplitter.core.domain.testutil
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Expense
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Settlement
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.PeopleGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.SettlementRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -61,5 +63,21 @@ class FakeExpenseGroupRepository(initial: List<ExpenseGroup> = emptyList()) : Ex
     }
     override suspend fun deleteExpenseGroup(groupId: String) {
         groups.value = groups.value.filterNot { it.id == groupId }
+    }
+}
+
+class FakeSettlementRepository(initial: List<Settlement> = emptyList()) : SettlementRepository {
+    val settlements = MutableStateFlow(initial)
+    var failNext = false
+    override fun observeSettlements(): Flow<List<Settlement>> = settlements
+    override suspend fun addSettlements(settlements: List<Settlement>) {
+        if (failNext) {
+            failNext = false
+            error("disk full")
+        }
+        this.settlements.value += settlements
+    }
+    override suspend fun deleteSettlementsIn(expenseGroupId: String) {
+        settlements.value = settlements.value.filterNot { it.expenseGroupId == expenseGroupId }
     }
 }

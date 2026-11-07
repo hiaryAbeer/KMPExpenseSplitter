@@ -3,6 +3,8 @@ package com.abeerapps.kmpexpensesplitter.core.domain.model
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class ExpenseGroupDetailsTest {
 
@@ -66,5 +68,37 @@ class ExpenseGroupDetailsTest {
             listOf(Triple(ExpenseCategory.Hotel, 90_00L, 0.75), Triple(ExpenseCategory.Food, 30_00L, 0.25)),
             details.categoryTotals.map { Triple(it.category, it.total.minorUnits, it.share) },
         )
+    }
+
+    @Test
+    fun `stats include what each member paid and the average per person`() {
+        assertEquals(
+            listOf("Ahmad" to 90_00L, "Sara" to 0L, "Omar" to 30_00L),
+            details.memberSpending.map { it.name to it.paid.minorUnits },
+        )
+        assertEquals(Money(40_00, jod), details.averagePerPerson) // 120 / 3 people.
+        assertEquals(2, details.expenses.size)
+    }
+
+    @Test
+    fun `the settle up plan clears every balance`() {
+        assertEquals(
+            listOf(Triple("Sara", "Ahmad", 30_00L), Triple("Sara", "Omar", 15_00L)),
+            details.transfers.map { Triple(it.fromName, it.toName, it.amount.minorUnits) },
+        )
+        assertFalse(details.isSettled)
+    }
+
+    @Test
+    fun `recorded settlements bring balances to zero`() {
+        val settlements = details.transfers.mapIndexed { i, t ->
+            Settlement("s$i", "t", t.fromId, t.toId, t.amount, LocalDate(2026, 4, 26))
+        } + Settlement("other", "x", sara.id, you.id, Money(5_00, jod), LocalDate(2026, 4, 26)) // Another trip: ignored.
+
+        val settled = ExpenseGroupDetails.build(trip, listOf(friends, family), expenses, jod, settlements)
+
+        assertTrue(settled.balances.all { it.balance.isZero })
+        assertTrue(settled.isSettled)
+        assertEquals(Money(120_00, jod), settled.totalSpent) // Settling is not spending.
     }
 }

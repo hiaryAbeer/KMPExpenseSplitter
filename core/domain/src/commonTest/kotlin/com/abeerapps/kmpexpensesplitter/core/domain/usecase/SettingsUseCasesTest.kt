@@ -17,6 +17,7 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeExpenseRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakePeopleGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeSettlementRepository
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
@@ -94,7 +95,7 @@ class SettingsUseCasesTest {
         }
         val groups = FakeExpenseGroupRepository()
         val observeGroups = ObserveGroupsUseCase(
-            groups, FakePeopleGroupRepository(), FakeExpenseRepository(), FakeProfiles(UserProfile("Ahmad", jod)),
+            groups, FakePeopleGroupRepository(), FakeExpenseRepository(), FakeSettlementRepository(), FakeProfiles(UserProfile("Ahmad", jod)),
         )
         assertEquals(ExportResult.Failed, ExportExpenseReportUseCase(observeGroups, exporter)())
         assertFalse(exporterCalled)

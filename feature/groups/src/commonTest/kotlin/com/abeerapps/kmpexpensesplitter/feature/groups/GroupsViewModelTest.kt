@@ -59,7 +59,7 @@ class GroupsViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun viewModel() = GroupsViewModel(
-        observeGroups = ObserveGroupsUseCase(trips, people, expenses, profiles),
+        observeGroups = ObserveGroupsUseCase(trips, people, expenses, FakeSettlementRepository(), profiles),
         dateProvider = dateProvider,
     )
 

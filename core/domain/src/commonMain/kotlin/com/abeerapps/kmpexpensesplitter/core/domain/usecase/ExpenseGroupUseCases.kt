@@ -8,6 +8,7 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.SupportedCurrencies
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.PeopleGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.SettlementRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -109,9 +110,11 @@ class RenameExpenseGroupUseCase(private val repository: ExpenseGroupRepository) 
 class DeleteExpenseGroupUseCase(
     private val repository: ExpenseGroupRepository,
     private val expenses: ExpenseRepository,
+    private val settlements: SettlementRepository,
 ) {
     suspend operator fun invoke(groupId: String): DeleteResult = try {
         expenses.deleteExpensesIn(groupId)
+        settlements.deleteSettlementsIn(groupId)
         repository.deleteExpenseGroup(groupId)
         DeleteResult.Deleted
     } catch (e: CancellationException) {
@@ -127,13 +130,14 @@ class ObserveExpensesUseCase(private val repository: ExpenseRepository) {
 }
 
 /**
- * Emits the details of one expense group (expenses, balances, stats), or `null`
+ * Emits the details of one expense group (expenses, balances, settle-up plan, stats), or `null`
  * once it no longer exists (e.g. it was deleted). Recomputed on any change.
  */
 class ObserveExpenseGroupDetailsUseCase(
     private val expenseGroups: ExpenseGroupRepository,
     private val peopleGroups: PeopleGroupRepository,
     private val expenses: ExpenseRepository,
+    private val settlements: SettlementRepository,
     private val profiles: UserProfileRepository,
 ) {
     operator fun invoke(expenseGroupId: String): Flow<ExpenseGroupDetails?> =
@@ -141,14 +145,16 @@ class ObserveExpenseGroupDetailsUseCase(
             expenseGroups.observeExpenseGroups(),
             peopleGroups.observeGroups(),
             expenses.observeExpenses(),
+            settlements.observeSettlements(),
             profiles.observeProfile(),
-        ) { trips, people, spent, profile ->
+        ) { trips, people, spent, settled, profile ->
             trips.firstOrNull { it.id == expenseGroupId }?.let { group ->
                 ExpenseGroupDetails.build(
                     group = group,
                     peopleGroups = people.withYourName(profile?.name),
                     allExpenses = spent,
                     currency = profile?.defaultCurrency ?: SupportedCurrencies.default.code,
+                    allSettlements = settled,
                 )
             }
         }

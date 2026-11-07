@@ -6,12 +6,14 @@ import com.abeerapps.kmpexpensesplitter.core.data.repository.DataStoreAppPrefere
 import com.abeerapps.kmpexpensesplitter.core.data.repository.DeviceLocalDataCleaner
 import com.abeerapps.kmpexpensesplitter.core.data.repository.InMemoryExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.data.repository.InMemoryExpenseRepository
+import com.abeerapps.kmpexpensesplitter.core.data.repository.InMemorySettlementRepository
 import com.abeerapps.kmpexpensesplitter.core.data.repository.InMemoryPeopleGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.data.repository.UnavailableExpenseReportExporter
 import com.abeerapps.kmpexpensesplitter.core.domain.config.DateProvider
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.AppPreferencesRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.SettlementRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseReportExporter
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.LocalDataCleaner
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.PeopleGroupRepository
@@ -33,8 +35,9 @@ val dataModule: Module = module {
     single { InMemoryPeopleGroupRepository() } bind PeopleGroupRepository::class
     single { InMemoryExpenseGroupRepository() } bind ExpenseGroupRepository::class
     single { InMemoryExpenseRepository() } bind ExpenseRepository::class
+    single { InMemorySettlementRepository() } bind SettlementRepository::class
     single<DateProvider> { SystemDateProvider() }
     single<AppPreferencesRepository> { DataStoreAppPreferencesRepository(dataStore = get()) }
-    single<LocalDataCleaner> { DeviceLocalDataCleaner(dataStore = get(), expenseGroups = get(), groups = get(), expenses = get()) }
+    single<LocalDataCleaner> { DeviceLocalDataCleaner(dataStore = get(), expenseGroups = get(), groups = get(), expenses = get(), settlements = get()) }
     single<ExpenseReportExporter> { UnavailableExpenseReportExporter() }
 }

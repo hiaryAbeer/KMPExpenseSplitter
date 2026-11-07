@@ -17,7 +17,9 @@ import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.PeopleGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseGroupDetailsUseCase
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.SettleUpUseCase
 import com.abeerapps.kmpexpensesplitter.feature.groups.details.DetailsTab
+import com.abeerapps.kmpexpensesplitter.feature.groups.details.GroupDetailsAction
 import com.abeerapps.kmpexpensesplitter.feature.groups.details.GroupDetailsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -73,6 +75,7 @@ class GroupDetailsViewModelTest {
         override suspend fun deleteExpense(expenseId: String) = Unit
         override suspend fun deleteExpensesIn(expenseGroupId: String) = Unit
     }
+    private val settlements = FakeSettlementRepository()
     private val profiles = object : UserProfileRepository {
         override fun observeProfile(): Flow<UserProfile?> = MutableStateFlow(UserProfile("Ahmad", jod))
         override suspend fun saveProfile(profile: UserProfile) = Unit
@@ -85,7 +88,8 @@ class GroupDetailsViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun viewModel(groupId: String = "t1") = GroupDetailsViewModel(
-        observeDetails = ObserveExpenseGroupDetailsUseCase(tripRepo, peopleRepo, expenseRepo, profiles),
+        observeDetails = ObserveExpenseGroupDetailsUseCase(tripRepo, peopleRepo, expenseRepo, settlements, profiles),
+        settleUp = SettleUpUseCase(settlements, { today }, newId = { "s${settlements.settlements.value.size}" }),
         dateProvider = DateProvider { today },
         savedStateHandle = SavedStateHandle(mapOf(GroupDetailsViewModel.ARG_GROUP_ID to groupId)),
     )
@@ -100,9 +104,53 @@ class GroupDetailsViewModelTest {
         assertEquals(listOf("Hotel" to "Sara"), details.expenses.map { it.expense.title to it.payerName })
         assertEquals(listOf("Sara" to 45_00L, "Ahmad" to -45_00L), details.balances.map { it.name to it.balance.minorUnits })
         assertEquals(DetailsTab.Expenses, vm.uiState.value.tab)
+        assertTrue(vm.uiState.value.showAddExpense)
 
-        vm.onTabSelected(DetailsTab.Stats)
+        vm.onAction(GroupDetailsAction.TabSelected(DetailsTab.Stats))
         assertEquals(DetailsTab.Stats, vm.uiState.value.tab)
+        assertTrue(vm.uiState.value.showAddExpense)
+
+        // Balances ends with Settle Up instead of the "+" button.
+        vm.onAction(GroupDetailsAction.TabSelected(DetailsTab.Balances))
+        assertFalse(vm.uiState.value.showAddExpense)
+    }
+
+    @Test
+    fun `marking as settled records the payments and hides Settle Up`() = runTest {
+        val vm = viewModel()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        assertTrue(vm.uiState.value.canSettleUp)
+        assertEquals(listOf(Triple("Ahmad", "Sara", 45_00L)), vm.uiState.value.details!!.transfers.map { Triple(it.fromName, it.toName, it.amount.minorUnits) })
+
+        vm.onAction(GroupDetailsAction.SettleUpClicked)
+        assertTrue(vm.uiState.value.showSettleUp)
+        vm.onAction(GroupDetailsAction.MarkSettledClicked)
+
+        val state = vm.uiState.value
+        assertFalse(state.showSettleUp)
+        assertFalse(state.canSettleUp)
+        assertEquals(listOf(0L, 0L), state.details!!.balances.map { it.balance.minorUnits })
+        assertEquals(listOf(Triple(you.id, sara.id, 45_00L)), settlements.settlements.value.map { Triple(it.fromId, it.toId, it.amount.minorUnits) })
+
+        // Nothing left to settle: the button does nothing.
+        vm.onAction(GroupDetailsAction.SettleUpClicked)
+        assertFalse(vm.uiState.value.showSettleUp)
+    }
+
+    @Test
+    fun `a failed settle up keeps the sheet open and reports the error once`() = runTest {
+        val vm = viewModel()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        settlements.failNext = true
+
+        vm.onAction(GroupDetailsAction.SettleUpClicked)
+        vm.onAction(GroupDetailsAction.MarkSettledClicked)
+        assertTrue(vm.uiState.value.showSettleUp)
+        assertTrue(vm.uiState.value.settleFailed)
+        assertTrue(vm.uiState.value.canSettleUp)
+
+        vm.onAction(GroupDetailsAction.MessageShown)
+        assertFalse(vm.uiState.value.settleFailed)
     }
 
     @Test

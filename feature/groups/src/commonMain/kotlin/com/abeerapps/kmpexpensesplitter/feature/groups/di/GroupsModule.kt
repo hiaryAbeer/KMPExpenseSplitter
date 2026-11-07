@@ -9,6 +9,7 @@ import com.abeerapps.kmpexpensesplitter.feature.groups.GroupsViewModel
 import com.abeerapps.kmpexpensesplitter.feature.groups.details.GroupDetailsViewModel
 import com.abeerapps.kmpexpensesplitter.feature.groups.manage.ManageExpenseGroupsViewModel
 import com.abeerapps.kmpexpensesplitter.feature.groups.manage.ManagePeopleGroupsViewModel
+import com.abeerapps.kmpexpensesplitter.core.domain.usecase.SettleUpUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -23,6 +24,7 @@ val groupsModule = module {
     factory { UpdatePeopleGroupUseCase(groups = get(), expenses = get(), profiles = get()) }
     factoryOf(::DeletePeopleGroupUseCase)
     factoryOf(::ObserveExpenseGroupDetailsUseCase)
+    factory { SettleUpUseCase(repository = get(), dateProvider = get()) }
     viewModelOf(::GroupsViewModel)
     viewModelOf(::GroupDetailsViewModel)
     viewModelOf(::ManageExpenseGroupsViewModel)

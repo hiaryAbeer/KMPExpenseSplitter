@@ -10,6 +10,7 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.SupportedCurrencies
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.PeopleGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.SettlementRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -22,12 +23,13 @@ class ObserveUserProfileUseCase(private val repository: UserProfileRepository) {
 /**
  * Emits a summary of each expense group (people involved, total spent, your balance)
  * in the user's default currency, most recently active first. Recomputed whenever
- * expense groups, people groups, expenses or the profile change.
+ * expense groups, people groups, expenses, settlements or the profile change.
  */
 class ObserveGroupsUseCase(
     private val expenseGroups: ExpenseGroupRepository,
     private val peopleGroups: PeopleGroupRepository,
     private val expenses: ExpenseRepository,
+    private val settlements: SettlementRepository,
     private val profiles: UserProfileRepository,
 ) {
     operator fun invoke(): Flow<List<GroupSummary>> =
@@ -35,10 +37,11 @@ class ObserveGroupsUseCase(
             expenseGroups.observeExpenseGroups(),
             peopleGroups.observeGroups(),
             expenses.observeExpenses(),
+            settlements.observeSettlements(),
             profiles.observeProfile(),
-        ) { trips, people, spent, profile ->
+        ) { trips, people, spent, settled, profile ->
             val currency = profile?.defaultCurrency ?: SupportedCurrencies.default.code
-            GroupSummaries.build(trips, people.withYourName(profile?.name), spent, currency)
+            GroupSummaries.build(trips, people.withYourName(profile?.name), spent, currency, settled)
         }
 }
 

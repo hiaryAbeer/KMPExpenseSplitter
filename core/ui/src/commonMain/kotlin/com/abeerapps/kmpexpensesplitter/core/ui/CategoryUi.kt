@@ -14,6 +14,7 @@ import com.abeerapps.kmpexpensesplitter.core.ui.resources.ic_category_food
 import com.abeerapps.kmpexpensesplitter.core.ui.resources.ic_category_hotel
 import com.abeerapps.kmpexpensesplitter.core.ui.resources.ic_category_shopping
 import com.abeerapps.kmpexpensesplitter.core.ui.resources.ic_category_transport
+import androidx.compose.ui.graphics.Color
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 
@@ -37,4 +38,19 @@ val ExpenseCategory.label: StringResource
         ExpenseCategory.Bills -> Res.string.category_bills
         ExpenseCategory.Shopping -> Res.string.category_shopping
         ExpenseCategory.Entertainment -> Res.string.category_entertainment
+    }
+
+/**
+ * Chart color of an expense category (Group Details stats). Hotel, Food, Transport,
+ * Shopping and Entertainment come from the design; Bills is blue to stay distinct.
+ * Mid-tone, so they read on both the light and the dark card.
+ */
+val ExpenseCategory.chartColor: Color
+    get() = when (this) {
+        ExpenseCategory.Hotel -> Color(0xFF0D9488)
+        ExpenseCategory.Food -> Color(0xFFFB923C)
+        ExpenseCategory.Transport -> Color(0xFF8B5CF6)
+        ExpenseCategory.Shopping -> Color(0xFFEC4899)
+        ExpenseCategory.Entertainment -> Color(0xFF06B6D4)
+        ExpenseCategory.Bills -> Color(0xFF3B82F6)
     }

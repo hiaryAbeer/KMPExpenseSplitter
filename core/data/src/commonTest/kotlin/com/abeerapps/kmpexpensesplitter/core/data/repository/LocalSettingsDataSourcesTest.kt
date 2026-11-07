@@ -56,7 +56,7 @@ class LocalSettingsDataSourcesTest {
             ),
         )
 
-        DeviceLocalDataCleaner(store, InMemoryExpenseGroupRepository(), InMemoryPeopleGroupRepository(), expenses).clearAll()
+        DeviceLocalDataCleaner(store, InMemoryExpenseGroupRepository(), InMemoryPeopleGroupRepository(), expenses, InMemorySettlementRepository()).clearAll()
 
         assertNull(profiles.observeProfile().first())
         assertEquals(ThemePreference.System, prefs.observeTheme().first())

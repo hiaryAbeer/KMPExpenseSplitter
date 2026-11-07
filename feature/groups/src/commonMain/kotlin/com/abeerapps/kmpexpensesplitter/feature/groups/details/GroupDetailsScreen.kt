@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -27,9 +26,10 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,31 +51,24 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.AppCard
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.AppTopBar
 import com.abeerapps.kmpexpensesplitter.core.designsystem.component.EmptyState
-import com.abeerapps.kmpexpensesplitter.core.designsystem.component.InitialAvatar
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.Res as DsRes
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_calendar
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_folder
 import com.abeerapps.kmpexpensesplitter.core.designsystem.resources.ic_plus
 import com.abeerapps.kmpexpensesplitter.core.designsystem.theme.ExpenseSplitterTheme
-import com.abeerapps.kmpexpensesplitter.core.domain.model.CategoryTotal
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroupDetails
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseItem
-import com.abeerapps.kmpexpensesplitter.core.domain.model.PersonBalance
 import com.abeerapps.kmpexpensesplitter.core.ui.AvatarStack
 import com.abeerapps.kmpexpensesplitter.core.ui.format
 import com.abeerapps.kmpexpensesplitter.core.ui.icon
-import com.abeerapps.kmpexpensesplitter.core.ui.label
 import com.abeerapps.kmpexpensesplitter.core.ui.resources.ic_empty_groups
 import com.abeerapps.kmpexpensesplitter.core.ui.resources.Res as UiRes
 import com.abeerapps.kmpexpensesplitter.feature.groups.resources.Res
 import com.abeerapps.kmpexpensesplitter.feature.groups.resources.details_add_expense
 import com.abeerapps.kmpexpensesplitter.feature.groups.resources.details_empty_message
 import com.abeerapps.kmpexpensesplitter.feature.groups.resources.details_empty_title
-import com.abeerapps.kmpexpensesplitter.feature.groups.resources.details_gets_back
-import com.abeerapps.kmpexpensesplitter.feature.groups.resources.details_owes
+import com.abeerapps.kmpexpensesplitter.feature.groups.resources.details_settle_failed
 import com.abeerapps.kmpexpensesplitter.feature.groups.resources.details_paid_by
-import com.abeerapps.kmpexpensesplitter.feature.groups.resources.details_settled
-import com.abeerapps.kmpexpensesplitter.feature.groups.resources.details_share_percent
 import com.abeerapps.kmpexpensesplitter.feature.groups.resources.details_tab_balances
 import com.abeerapps.kmpexpensesplitter.feature.groups.resources.details_tab_expenses
 import com.abeerapps.kmpexpensesplitter.feature.groups.resources.details_tab_stats
@@ -87,16 +81,18 @@ import kotlinx.datetime.format.MonthNames
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.math.roundToInt
 
 /** Test tags for UI tests. */
 object GroupDetailsTestTags {
     const val ADD_EXPENSE = "details_add_expense"
+    const val SETTLE_UP = "details_settle_up"
+    const val MARK_SETTLED = "details_mark_settled"
 }
 
 /**
  * Group Details: header card (members, total), then Expenses / Balances / Stats tabs.
- * The "+" button adds an expense with this expense group preselected.
+ * The "+" button (Expenses and Stats tabs) adds an expense with this expense group
+ * preselected; the Balances tab ends with "Settle Up" instead.
  *
  * @param onExpenseClick an expense card tapped (opens Expense Details).
  * @param onAddExpense receives this expense group's id.
@@ -109,9 +105,19 @@ fun GroupDetailsScreen(
     viewModel: GroupDetailsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val onAction = viewModel::onAction
 
     // Deleted elsewhere (e.g. from "Manage expense groups"): nothing to show.
     LaunchedEffect(uiState.isMissing) { if (uiState.isMissing) onBack() }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val settleFailed = stringResource(Res.string.details_settle_failed)
+    LaunchedEffect(uiState.settleFailed) {
+        if (uiState.settleFailed) {
+            snackbarHostState.showSnackbar(settleFailed)
+            onAction(GroupDetailsAction.MessageShown)
+        }
+    }
 
     val spacing = ExpenseSplitterTheme.spacing
     Box(
@@ -128,23 +134,27 @@ fun GroupDetailsScreen(
             )
             val details = uiState.details ?: return@Column
             HeaderCard(details, Modifier.padding(horizontal = spacing.screenHorizontal))
-            Tabs(selected = uiState.tab, onSelect = viewModel::onTabSelected, modifier = Modifier.padding(top = spacing.md))
-            when (uiState.tab) {
-                DetailsTab.Expenses ->
-                    if (details.expenses.isEmpty()) NoExpenses()
-                    else DetailsList { expensesByDate(details.expenses, uiState.today, onExpenseClick) }
-                DetailsTab.Balances ->
-                    if (details.expenses.isEmpty()) NoExpenses()
-                    else DetailsList { items(details.balances, key = { it.participantId }) { BalanceRow(it) } }
-                DetailsTab.Stats ->
-                    if (details.expenses.isEmpty()) NoExpenses()
-                    else DetailsList { items(details.categoryTotals, key = { it.category.name }) { CategoryRow(it) } }
+            Tabs(
+                selected = uiState.tab,
+                onSelect = { onAction(GroupDetailsAction.TabSelected(it)) },
+                modifier = Modifier.padding(top = spacing.md),
+            )
+            when {
+                details.expenses.isEmpty() -> NoExpenses()
+                uiState.tab == DetailsTab.Expenses ->
+                    DetailsList(roomForFab = true) { expensesByDate(details.expenses, uiState.today, onExpenseClick) }
+                uiState.tab == DetailsTab.Balances ->
+                    DetailsList(roomForFab = false) {
+                        balances(details, uiState.canSettleUp, onSettleUp = { onAction(GroupDetailsAction.SettleUpClicked) })
+                    }
+                else -> DetailsList(roomForFab = false) { stats(details) }
             }
         }
 
-        uiState.details?.let { details ->
+        val group = uiState.details?.group
+        if (group != null && uiState.showAddExpense) {
             FloatingActionButton(
-                onClick = { onAddExpense(details.group.id) },
+                onClick = { onAddExpense(group.id) },
                 shape = CircleShape,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -162,6 +172,17 @@ fun GroupDetailsScreen(
                 )
             }
         }
+        SnackbarHost(snackbarHostState, Modifier.align(Alignment.BottomCenter))
+    }
+
+    val details = uiState.details
+    if (details != null && uiState.showSettleUp) {
+        SettleUpSheet(
+            details = details,
+            isSettling = uiState.isSettling,
+            onMarkSettled = { onAction(GroupDetailsAction.MarkSettledClicked) },
+            onDismiss = { onAction(GroupDetailsAction.SettleUpDismissed) },
+        )
     }
 }
 
@@ -247,14 +268,19 @@ private fun Tabs(selected: DetailsTab, onSelect: (DetailsTab) -> Unit, modifier:
     }
 }
 
+/** @param roomForFab extra bottom room so the last card scrolls clear of the "+" button. */
 @Composable
-private fun DetailsList(content: LazyListScope.() -> Unit) {
+private fun DetailsList(roomForFab: Boolean, content: LazyListScope.() -> Unit) {
     val spacing = ExpenseSplitterTheme.spacing
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        // Bottom room so the last card scrolls clear of the "+" button.
-        contentPadding = PaddingValues(start = spacing.screenHorizontal, end = spacing.screenHorizontal, top = spacing.md, bottom = 88.dp),
-        verticalArrangement = Arrangement.spacedBy(spacing.sm),
+        contentPadding = PaddingValues(
+            start = spacing.screenHorizontal,
+            end = spacing.screenHorizontal,
+            top = spacing.md,
+            bottom = if (roomForFab) 88.dp else spacing.md,
+        ),
+        verticalArrangement = Arrangement.spacedBy(spacing.smd),
         content = content,
     )
 }
@@ -324,67 +350,6 @@ private fun ExpenseRow(item: ExpenseItem, onClick: () -> Unit) {
                 text = item.expense.amount.format(),
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Normal),
                 color = colors.onSurface,
-            )
-        }
-    }
-}
-
-/** A person's balance: green "Gets back", red "Owes", or "Settled". */
-@Composable
-private fun BalanceRow(person: PersonBalance) {
-    val extended = ExpenseSplitterTheme.extendedColors
-    val balance = person.balance
-    val (text, color) = when {
-        balance.isPositive -> stringResource(Res.string.details_gets_back, balance.format()) to extended.positive
-        balance.isNegative -> stringResource(Res.string.details_owes, (-balance).format()) to extended.negative
-        else -> stringResource(Res.string.details_settled) to MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    AppCard(Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            InitialAvatar(person.name, size = 40.dp)
-            Spacer(Modifier.width(ExpenseSplitterTheme.spacing.smd))
-            Text(
-                text = person.name,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            Text(text = text, style = MaterialTheme.typography.titleMedium, color = color)
-        }
-    }
-}
-
-/** A category's total, its share of all spending and a bar showing that share. */
-@Composable
-private fun CategoryRow(total: CategoryTotal) {
-    val colors = MaterialTheme.colorScheme
-    AppCard(Modifier.fillMaxWidth()) {
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CategoryIcon(total.category.icon)
-                Spacer(Modifier.width(ExpenseSplitterTheme.spacing.smd))
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(total.category.label), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
-                    Text(
-                        text = stringResource(Res.string.details_share_percent, (total.share * 100).roundToInt()),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.onSurfaceVariant,
-                    )
-                }
-                Text(
-                    text = total.total.format(),
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Normal),
-                    color = colors.onSurface,
-                )
-            }
-            LinearProgressIndicator(
-                progress = { total.share.toFloat() },
-                color = colors.primary,
-                trackColor = colors.primary.copy(alpha = 0.1f),
-                drawStopIndicator = {},
-                modifier = Modifier.fillMaxWidth().padding(top = ExpenseSplitterTheme.spacing.smd).height(6.dp),
             )
         }
     }

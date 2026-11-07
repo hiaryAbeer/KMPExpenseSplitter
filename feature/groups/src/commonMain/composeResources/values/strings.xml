@@ -64,9 +64,21 @@
     <string name="details_empty_title">No expenses yet</string>
     <string name="details_empty_message">Add the first expense to this group.</string>
     <!-- %1$s = amount -->
-    <string name="details_gets_back">Gets back %1$s</string>
-    <string name="details_owes">Owes %1$s</string>
+    <string name="details_gets_back">Gets back</string>
+    <string name="details_owes">Owes</string>
     <string name="details_settled">Settled</string>
     <!-- %1$d = percentage of total spending. A single % (Compose resources do not unescape %%). -->
-    <string name="details_share_percent">%1$d% of total</string>
+    <string name="details_settle_up">Settle Up</string>
+    <string name="details_settle_up_message">These payments clear every balance in %1$s.</string>
+    <string name="details_transfer">%1$s pays %2$s</string>
+    <string name="details_mark_settled">Mark as Settled</string>
+    <string name="details_settle_failed">Couldn’t mark the group as settled. Please try again.</string>
+    <string name="details_stats_summary">Spending Summary</string>
+    <string name="details_stats_average">Average per person</string>
+    <string name="details_stats_total">Total expenses</string>
+    <string name="details_stats_count">Number of expenses</string>
+    <string name="details_stats_by_category">Spending by Category</string>
+    <string name="details_stats_by_member">Spending by Member</string>
+    <string name="details_stats_slice">%1$s %2$d%</string>
+    <string name="details_stats_member_bar">%1$s paid %2$s</string>
 </resources>

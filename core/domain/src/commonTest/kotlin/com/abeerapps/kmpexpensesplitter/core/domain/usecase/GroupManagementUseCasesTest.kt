@@ -8,6 +8,7 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseShare
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
 import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Settlement
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
 import com.abeerapps.kmpexpensesplitter.core.domain.model.UserProfile
 import com.abeerapps.kmpexpensesplitter.core.domain.model.countByExpenseGroup
@@ -16,6 +17,7 @@ import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileReposi
 import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeExpenseRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakePeopleGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeSettlementRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -114,10 +116,14 @@ class GroupManagementUseCasesTest {
     }
 
     @Test
-    fun `deleting an expense group deletes only its expenses`() = runTest {
+    fun `deleting an expense group deletes only its expenses and settlements`() = runTest {
         expenses.expenses.value = listOf(saraPaid("t1", "e1"), saraPaid("t2", "e2"))
-        assertEquals(DeleteResult.Deleted, DeleteExpenseGroupUseCase(trips, expenses)("t1"))
+        val settled = FakeSettlementRepository(
+            listOf("t1", "t2").map { Settlement("s-$it", it, Participant.YOU_ID, "s", Money(1_00, jod), today) },
+        )
+        assertEquals(DeleteResult.Deleted, DeleteExpenseGroupUseCase(trips, expenses, settled)("t1"))
         assertEquals(listOf("t2"), trips.groups.value.map { it.id })
         assertEquals(listOf("e2"), expenses.expenses.value.map { it.id })
+        assertEquals(listOf("t2"), settled.settlements.value.map { it.expenseGroupId })
     }
 }

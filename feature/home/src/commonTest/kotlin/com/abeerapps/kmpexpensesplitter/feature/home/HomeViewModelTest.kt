@@ -1,5 +1,8 @@
 package com.abeerapps.kmpexpensesplitter.feature.home
 
+import kotlinx.coroutines.flow.flowOf
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.SettlementRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Settlement
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
@@ -52,7 +55,7 @@ class HomeViewModelTest {
 
     private fun viewModel() = HomeViewModel(
         ObserveUserProfileUseCase(profiles),
-        ObserveGroupsUseCase(groups, people, expenses, profiles),
+        ObserveGroupsUseCase(groups, people, expenses, NoSettlements, profiles),
         CalculateBalanceSummaryUseCase(),
     )
 
@@ -197,4 +200,11 @@ class HomeViewModelTest {
         override fun observeExpenses(): Flow<List<Expense>> = expenses
         override suspend fun addExpense(expense: Expense) { expenses.value += expense }
     }
+}
+
+/** No settle-ups recorded: balances come from expenses alone. */
+private object NoSettlements : SettlementRepository {
+    override fun observeSettlements(): Flow<List<Settlement>> = flowOf(emptyList())
+    override suspend fun addSettlements(settlements: List<Settlement>) = Unit
+    override suspend fun deleteSettlementsIn(expenseGroupId: String) = Unit
 }

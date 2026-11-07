@@ -1,5 +1,8 @@
 package com.abeerapps.kmpexpensesplitter.feature.settings
 
+import kotlinx.coroutines.flow.flowOf
+import com.abeerapps.kmpexpensesplitter.core.domain.repository.SettlementRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Settlement
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import com.abeerapps.kmpexpensesplitter.core.domain.config.AppInfo
@@ -76,7 +79,7 @@ class SettingsViewModelTest {
         override fun observeExpenses(): Flow<List<Expense>> = MutableStateFlow(emptyList())
         override suspend fun addExpense(expense: Expense) = Unit
     }
-    private val observeGroups get() = ObserveGroupsUseCase(groups, people, expenses, profiles)
+    private val observeGroups get() = ObserveGroupsUseCase(groups, people, expenses, NoSettlements, profiles)
     private val prefs = object : AppPreferencesRepository {
         val theme = MutableStateFlow(ThemePreference.System)
         override fun observeTheme(): Flow<ThemePreference> = theme
@@ -250,4 +253,11 @@ class SettingsViewModelTest {
             assertNull(awaitItem().openSheet)
         }
     }
+}
+
+/** No settle-ups recorded: balances come from expenses alone. */
+private object NoSettlements : SettlementRepository {
+    override fun observeSettlements(): Flow<List<Settlement>> = flowOf(emptyList())
+    override suspend fun addSettlements(settlements: List<Settlement>) = Unit
+    override suspend fun deleteSettlementsIn(expenseGroupId: String) = Unit
 }

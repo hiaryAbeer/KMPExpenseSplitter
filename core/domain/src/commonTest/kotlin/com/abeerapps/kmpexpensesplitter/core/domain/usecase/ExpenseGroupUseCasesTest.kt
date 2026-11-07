@@ -9,12 +9,14 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.GroupSummary
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
 import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
+import com.abeerapps.kmpexpensesplitter.core.domain.model.Settlement
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
 import com.abeerapps.kmpexpensesplitter.core.domain.model.UserProfile
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeExpenseGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeExpenseRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakePeopleGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.domain.testutil.FakeSettlementRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -22,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 
@@ -97,12 +100,25 @@ class ExpenseGroupUseCasesTest {
             ),
         )
 
-        val summary = ObserveGroupsUseCase(trips, people, expenses, profiles)().first().single()
+        val summary = ObserveGroupsUseCase(trips, people, expenses, FakeSettlementRepository(), profiles)().first().single()
 
         assertEquals(
             GroupSummary("trip", "Aqaba Trip", listOf("Ahmad", "Sara", "Omar"), Money(40_00, jod), Money(5_00, jod), today),
             summary,
         )
+    }
+
+    @Test
+    fun `settlements move your balance on the summary`() = runTest {
+        trips.groups.value = listOf(ExpenseGroup("trip", "Aqaba Trip", today))
+        // Omar paid 10, all yours: you owe 10 …
+        val expenses = FakeExpenseRepository(listOf(expense("e", "pg2", paidBy = omar.id, total = 10_00, shares = mapOf(you.id to 10_00L))))
+        // … until you pay him back.
+        val settled = FakeSettlementRepository(listOf(Settlement("s", "trip", you.id, omar.id, Money(10_00, jod), today)))
+        people.groups.value = listOf(PeopleGroup("pg2", "Family", listOf(you, omar), today))
+
+        val summary = ObserveGroupsUseCase(trips, people, expenses, settled, profiles)().first().single()
+        assertTrue(summary.yourBalance.isZero)
     }
 
     @Test
@@ -116,7 +132,7 @@ class ExpenseGroupUseCasesTest {
                 ),
             ),
         )
-        val order = ObserveGroupsUseCase(trips, people, expenses, profiles)().first().map { it.id }
+        val order = ObserveGroupsUseCase(trips, people, expenses, FakeSettlementRepository(), profiles)().first().map { it.id }
         assertEquals(listOf("old", "new"), order)
     }
 
