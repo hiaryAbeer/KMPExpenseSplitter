@@ -1,0 +1,73 @@
+-- Expenses and their per-person shares. Money is stored as minor units (amount × 100)
+-- plus the ISO 4217 code, never as floating point. Enums are stored by name.
+CREATE TABLE ExpenseEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    expense_group_id TEXT NOT NULL,
+    people_group_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    amount_minor INTEGER NOT NULL,
+    currency TEXT NOT NULL,
+    category TEXT NOT NULL,
+    paid_by TEXT NOT NULL,
+    split_type TEXT NOT NULL,
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    note TEXT
+);
+
+CREATE INDEX ExpenseEntity_group ON ExpenseEntity(expense_group_id);
+
+CREATE TABLE ExpenseShareEntity (
+    expense_id TEXT NOT NULL,
+    participant_id TEXT NOT NULL,
+    amount_minor INTEGER NOT NULL,
+    position INTEGER NOT NULL,
+    PRIMARY KEY (expense_id, participant_id)
+);
+
+-- One row per share. Newest date first; same-day expenses newest-added first.
+selectAllWithShares:
+SELECT e.*, s.participant_id, s.amount_minor AS share_minor
+FROM ExpenseEntity e
+LEFT JOIN ExpenseShareEntity s ON s.expense_id = e.id
+ORDER BY e.start_date DESC, e.rowid DESC, s.position ASC;
+
+insertExpense:
+INSERT INTO ExpenseEntity (id, expense_group_id, people_group_id, title, amount_minor, currency, category, paid_by, split_type, start_date, end_date, note)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateExpense:
+UPDATE ExpenseEntity SET
+    expense_group_id = :expenseGroupId,
+    people_group_id = :peopleGroupId,
+    title = :title,
+    amount_minor = :amountMinor,
+    currency = :currency,
+    category = :category,
+    paid_by = :paidBy,
+    split_type = :splitType,
+    start_date = :startDate,
+    end_date = :endDate,
+    note = :note
+WHERE id = :id;
+
+insertShare:
+INSERT INTO ExpenseShareEntity (expense_id, participant_id, amount_minor, position) VALUES (?, ?, ?, ?);
+
+deleteShares:
+DELETE FROM ExpenseShareEntity WHERE expense_id = ?;
+
+deleteExpense:
+DELETE FROM ExpenseEntity WHERE id = ?;
+
+deleteSharesInGroup:
+DELETE FROM ExpenseShareEntity WHERE expense_id IN (SELECT id FROM ExpenseEntity WHERE expense_group_id = ?);
+
+deleteExpensesInGroup:
+DELETE FROM ExpenseEntity WHERE expense_group_id = ?;
+
+deleteAllShares:
+DELETE FROM ExpenseShareEntity;
+
+deleteAllExpenses:
+DELETE FROM ExpenseEntity;

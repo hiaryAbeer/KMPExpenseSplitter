@@ -91,7 +91,7 @@ object GroupDetailsTestTags {
 
 /**
  * Group Details: header card (members, total), then Expenses / Balances / Stats tabs.
- * The "+" button (Expenses and Stats tabs) adds an expense with this expense group
+ * The "+" button (Expenses tab only) adds an expense with this expense group
  * preselected; the Balances tab ends with "Settle Up" instead.
  *
  * @param onExpenseClick an expense card tapped (opens Expense Details).

@@ -5,16 +5,19 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.abeerapps.kmpexpensesplitter.core.data.db.AppDatabase
 import com.abeerapps.kmpexpensesplitter.core.domain.model.GroupSummary
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ThemePreference
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.AppPreferencesRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseReportExporter
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExportResult
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.LocalDataCleaner
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import okio.IOException
 
 /**
@@ -46,21 +49,26 @@ internal class DataStoreAppPreferencesRepository(
 
 /**
  * Wipes everything stored locally: the Preferences DataStore (profile + app
- * preferences), the expense groups, the people groups, the expenses and the settlements. Add new stores here as they are introduced.
+ * preferences) and every table of the SQLite database (expense groups, people
+ * groups, expenses and settlements). Add new stores here as they are introduced.
  */
 internal class DeviceLocalDataCleaner(
     private val dataStore: DataStore<Preferences>,
-    private val expenseGroups: InMemoryExpenseGroupRepository,
-    private val groups: InMemoryPeopleGroupRepository,
-    private val expenses: InMemoryExpenseRepository,
-    private val settlements: InMemorySettlementRepository,
+    private val database: AppDatabase,
+    private val dispatcher: CoroutineDispatcher,
 ) : LocalDataCleaner {
     override suspend fun clearAll() {
         dataStore.edit { it.clear() }
-        expenseGroups.clear()
-        groups.clear()
-        expenses.clear()
-        settlements.clear()
+        withContext(dispatcher) {
+            database.transaction {
+                database.expenseEntityQueries.deleteAllShares()
+                database.expenseEntityQueries.deleteAllExpenses()
+                database.settlementEntityQueries.deleteAll()
+                database.peopleGroupEntityQueries.deleteAllMembers()
+                database.peopleGroupEntityQueries.deleteAllGroups()
+                database.expenseGroupEntityQueries.deleteAll()
+            }
+        }
     }
 }
 

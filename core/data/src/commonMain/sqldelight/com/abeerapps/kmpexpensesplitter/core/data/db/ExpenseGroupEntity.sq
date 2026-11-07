@@ -1,0 +1,22 @@
+-- Expense groups (trips). Dates are ISO-8601 strings (yyyy-MM-dd), which sort correctly as text.
+-- rowid order is creation order, so "newest first" is ORDER BY rowid DESC.
+CREATE TABLE ExpenseGroupEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_on TEXT NOT NULL
+);
+
+selectAll:
+SELECT id, name, created_on FROM ExpenseGroupEntity ORDER BY rowid DESC;
+
+insert:
+INSERT INTO ExpenseGroupEntity (id, name, created_on) VALUES (?, ?, ?);
+
+update:
+UPDATE ExpenseGroupEntity SET name = :name, created_on = :createdOn WHERE id = :id;
+
+delete:
+DELETE FROM ExpenseGroupEntity WHERE id = ?;
+
+deleteAll:
+DELETE FROM ExpenseGroupEntity;

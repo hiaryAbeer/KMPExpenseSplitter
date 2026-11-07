@@ -1,0 +1,24 @@
+-- Recorded settle-up payments: from_id paid to_id. Money as minor units + currency code.
+CREATE TABLE SettlementEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    expense_group_id TEXT NOT NULL,
+    from_id TEXT NOT NULL,
+    to_id TEXT NOT NULL,
+    amount_minor INTEGER NOT NULL,
+    currency TEXT NOT NULL,
+    date TEXT NOT NULL
+);
+
+CREATE INDEX SettlementEntity_group ON SettlementEntity(expense_group_id);
+
+selectAll:
+SELECT * FROM SettlementEntity ORDER BY rowid ASC;
+
+insert:
+INSERT INTO SettlementEntity (id, expense_group_id, from_id, to_id, amount_minor, currency, date) VALUES (?, ?, ?, ?, ?, ?, ?);
+
+deleteInGroup:
+DELETE FROM SettlementEntity WHERE expense_group_id = ?;
+
+deleteAll:
+DELETE FROM SettlementEntity;

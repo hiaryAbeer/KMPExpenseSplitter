@@ -108,7 +108,7 @@ class GroupDetailsViewModelTest {
 
         vm.onAction(GroupDetailsAction.TabSelected(DetailsTab.Stats))
         assertEquals(DetailsTab.Stats, vm.uiState.value.tab)
-        assertTrue(vm.uiState.value.showAddExpense)
+        assertFalse(vm.uiState.value.showAddExpense) // The "+" button is for the Expenses tab only.
 
         // Balances ends with Settle Up instead of the "+" button.
         vm.onAction(GroupDetailsAction.TabSelected(DetailsTab.Balances))

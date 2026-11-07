@@ -39,7 +39,7 @@ data class GroupDetailsUiState(
     /** The group was deleted (or never existed): the screen closes itself. */
     val isMissing: Boolean get() = !isLoading && details == null
 
-    /** "Add expense" belongs to the Expenses and Stats tabs; Balances ends with Settle Up instead. */
+    /** The "+" button belongs to the Expenses tab only; Balances ends with Settle Up instead. */
     val showAddExpense: Boolean get() = details != null && tab == DetailsTab.Expenses
 
     /** Settle Up is offered only while someone still owes money. */

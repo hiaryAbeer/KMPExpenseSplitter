@@ -1,5 +1,8 @@
 package com.abeerapps.kmpexpensesplitter.core.data.repository
 
+import kotlinx.coroutines.test.StandardTestDispatcher
+import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
+import com.abeerapps.kmpexpensesplitter.core.data.testutil.testDatabase
 import androidx.datastore.preferences.core.mutablePreferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import app.cash.turbine.test
@@ -40,11 +43,14 @@ class LocalSettingsDataSourcesTest {
     }
 
     @Test
-    fun `clear all wipes profile and theme and expenses`() = runTest {
+    fun `clear all wipes profile and theme and the database`() = runTest {
         val store = InMemoryDataStore()
         val profiles = DataStoreUserProfileRepository(store)
         val prefs = DataStoreAppPreferencesRepository(store)
-        val expenses = InMemoryExpenseRepository()
+        val database = testDatabase()
+        val expenses = SqlDelightExpenseRepository(database, StandardTestDispatcher(testScheduler))
+        val trips = SqlDelightExpenseGroupRepository(database, StandardTestDispatcher(testScheduler))
+        trips.createExpenseGroup(ExpenseGroup("t1", "Aqaba", LocalDate(2026, 4, 29)))
         val jod = CurrencyCode.of("JOD")!!
         profiles.saveProfile(UserProfile("Ahmad", jod))
         prefs.setTheme(ThemePreference.Dark)
@@ -56,11 +62,12 @@ class LocalSettingsDataSourcesTest {
             ),
         )
 
-        DeviceLocalDataCleaner(store, InMemoryExpenseGroupRepository(), InMemoryPeopleGroupRepository(), expenses, InMemorySettlementRepository()).clearAll()
+        DeviceLocalDataCleaner(store, database, StandardTestDispatcher(testScheduler)).clearAll()
 
         assertNull(profiles.observeProfile().first())
         assertEquals(ThemePreference.System, prefs.observeTheme().first())
         assertTrue(expenses.observeExpenses().first().isEmpty())
+        assertTrue(trips.observeExpenseGroups().first().isEmpty())
     }
 
     @Test

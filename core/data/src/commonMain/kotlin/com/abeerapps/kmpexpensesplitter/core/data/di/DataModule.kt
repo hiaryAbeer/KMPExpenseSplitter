@@ -4,10 +4,11 @@ import com.abeerapps.kmpexpensesplitter.core.data.SystemDateProvider
 import com.abeerapps.kmpexpensesplitter.core.data.repository.DataStoreUserProfileRepository
 import com.abeerapps.kmpexpensesplitter.core.data.repository.DataStoreAppPreferencesRepository
 import com.abeerapps.kmpexpensesplitter.core.data.repository.DeviceLocalDataCleaner
-import com.abeerapps.kmpexpensesplitter.core.data.repository.InMemoryExpenseGroupRepository
-import com.abeerapps.kmpexpensesplitter.core.data.repository.InMemoryExpenseRepository
-import com.abeerapps.kmpexpensesplitter.core.data.repository.InMemorySettlementRepository
-import com.abeerapps.kmpexpensesplitter.core.data.repository.InMemoryPeopleGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.data.db.AppDatabase
+import com.abeerapps.kmpexpensesplitter.core.data.repository.SqlDelightExpenseGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.data.repository.SqlDelightExpenseRepository
+import com.abeerapps.kmpexpensesplitter.core.data.repository.SqlDelightPeopleGroupRepository
+import com.abeerapps.kmpexpensesplitter.core.data.repository.SqlDelightSettlementRepository
 import com.abeerapps.kmpexpensesplitter.core.data.repository.UnavailableExpenseReportExporter
 import com.abeerapps.kmpexpensesplitter.core.domain.config.DateProvider
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.AppPreferencesRepository
@@ -18,8 +19,9 @@ import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseReportExpo
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.LocalDataCleaner
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.PeopleGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import org.koin.core.module.Module
-import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /**
@@ -32,12 +34,14 @@ internal expect val platformDataModule: Module
 val dataModule: Module = module {
     includes(platformDataModule)
     single<UserProfileRepository> { DataStoreUserProfileRepository(dataStore = get()) }
-    single { InMemoryPeopleGroupRepository() } bind PeopleGroupRepository::class
-    single { InMemoryExpenseGroupRepository() } bind ExpenseGroupRepository::class
-    single { InMemoryExpenseRepository() } bind ExpenseRepository::class
-    single { InMemorySettlementRepository() } bind SettlementRepository::class
+    // One SQLite database (driver from platformDataModule); queries run on the IO dispatcher.
+    single { AppDatabase(driver = get()) }
+    single<PeopleGroupRepository> { SqlDelightPeopleGroupRepository(database = get(), dispatcher = Dispatchers.IO) }
+    single<ExpenseGroupRepository> { SqlDelightExpenseGroupRepository(database = get(), dispatcher = Dispatchers.IO) }
+    single<ExpenseRepository> { SqlDelightExpenseRepository(database = get(), dispatcher = Dispatchers.IO) }
+    single<SettlementRepository> { SqlDelightSettlementRepository(database = get(), dispatcher = Dispatchers.IO) }
     single<DateProvider> { SystemDateProvider() }
     single<AppPreferencesRepository> { DataStoreAppPreferencesRepository(dataStore = get()) }
-    single<LocalDataCleaner> { DeviceLocalDataCleaner(dataStore = get(), expenseGroups = get(), groups = get(), expenses = get(), settlements = get()) }
+    single<LocalDataCleaner> { DeviceLocalDataCleaner(dataStore = get(), database = get(), dispatcher = Dispatchers.IO) }
     single<ExpenseReportExporter> { UnavailableExpenseReportExporter() }
 }

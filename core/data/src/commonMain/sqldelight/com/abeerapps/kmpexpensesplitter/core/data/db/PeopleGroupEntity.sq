@@ -1,0 +1,42 @@
+-- People groups and their members. Members keep their order through `position`.
+CREATE TABLE PeopleGroupEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_on TEXT NOT NULL
+);
+
+CREATE TABLE PeopleGroupMemberEntity (
+    group_id TEXT NOT NULL,
+    member_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    position INTEGER NOT NULL,
+    PRIMARY KEY (group_id, member_id)
+);
+
+-- One row per member (groups always have at least one); newest group first.
+selectAllWithMembers:
+SELECT g.id, g.name, g.created_on, m.member_id, m.name AS member_name
+FROM PeopleGroupEntity g
+LEFT JOIN PeopleGroupMemberEntity m ON m.group_id = g.id
+ORDER BY g.rowid DESC, m.position ASC;
+
+insertGroup:
+INSERT INTO PeopleGroupEntity (id, name, created_on) VALUES (?, ?, ?);
+
+updateGroup:
+UPDATE PeopleGroupEntity SET name = :name, created_on = :createdOn WHERE id = :id;
+
+insertMember:
+INSERT INTO PeopleGroupMemberEntity (group_id, member_id, name, position) VALUES (?, ?, ?, ?);
+
+deleteMembers:
+DELETE FROM PeopleGroupMemberEntity WHERE group_id = ?;
+
+deleteGroup:
+DELETE FROM PeopleGroupEntity WHERE id = ?;
+
+deleteAllMembers:
+DELETE FROM PeopleGroupMemberEntity;
+
+deleteAllGroups:
+DELETE FROM PeopleGroupEntity;

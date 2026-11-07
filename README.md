@@ -13,7 +13,7 @@ androidApp (Android entry)      iosApp (Swift entry, Xcode)
         \                          /
          └──────── :shared ───────┘   app shell: DI graph, navigation, start gate, iOS framework
                  /     |      \
- :feature:onboarding   |   :core:data ──► DataStore (Room/Ktor later)
+ :feature:onboarding   |   :core:data ──► DataStore + SQLDelight (Ktor later)
         |      \       |      |
         |   :core:designsystem │
         └──────────┬───────────┘
@@ -94,12 +94,21 @@ card (name, people involved, total spent) and three tabs, built from `ExpenseGro
 
 - **Expenses**: grouped by date ("Sat, Apr 25"), newest first, with category icon, "Paid by …"
   and amount.
-- **Balances**: each person's paid − shares across the group's expenses ("Gets back" / "Owes" /
-  "Settled"); balances always sum to zero.
-- **Stats**: spending per category with its share of the total.
+- **Balances**: each person's paid − shares, plus recorded settlements ("Gets back" / "Owes" /
+  "Settled", signed amount in green/red); balances always sum to zero. While anyone owes money the
+  list ends with **Settle Up**.
+- **Settle Up** (bottom sheet): the payments that clear every balance ("Lina pays Ahmad 52.75 JOD"),
+  planned by `SettleUpPlanner` (largest debt pays largest credit; at most people − 1 payments).
+  **Mark as Settled** stores them as `Settlement`s in one transaction (`SettleUpUseCase`), which
+  brings every balance, including "your balance" on Home, to zero and hides the button. A later
+  expense makes balances non-zero again and Settle Up comes back.
+- **Stats**: summary cards (average per person, total, number of expenses), spending by category
+  (pie chart with "Hotel 45%" labels and a legend) and spending by member (what each person paid,
+  bar chart with a round axis from `ChartScale`). Charts are drawn with Compose `Canvas`, no
+  chart library.
 
-The floating "+" opens Add Expense with this expense group preselected (route argument
-`expenseGroupId`). If the group is deleted elsewhere, the screen closes itself.
+The floating "+" (Expenses tab only) opens Add Expense with this expense group preselected (route
+argument `expenseGroupId`). If the group is deleted elsewhere, the screen closes itself.
 
 ### Expense Details
 
@@ -160,9 +169,32 @@ One expense group can contain expenses split within different people groups.
 - `AddExpenseUseCase.validate` is the single set of rules: the ViewModel runs it on every change to
   enable **Save** (outlined until valid, then filled) and to turn the split hint red, and the use case
   enforces it again on save.
-- Expense groups, people groups and expenses are kept in `InMemoryExpenseGroupRepository`,
-  `InMemoryPeopleGroupRepository` and `InMemoryExpenseRepository` (session only) and wiped by
-  "Clear local data". Swap those bindings for database storage; nothing above the data layer changes.
+- Expense groups, people groups, expenses and settlements are stored in SQLite; see
+  [Local database](#local-database).
+
+## Local database
+
+Expense groups, people groups (+ members), expenses (+ shares) and settlements live in one SQLite
+database, `expense_splitter.db`, through **SQLDelight** (`:core:data`). The profile and preferences
+stay in DataStore.
+
+- **Schema**: `core/data/src/commonMain/sqldelight/.../db/*.sq`. SQLDelight generates type-safe
+  Kotlin (`AppDatabase`) from the SQL at build time.
+- **Repositories**: `SqlDelight*Repository` implement the domain contracts. Reads are `Flow`s that
+  re-emit after every write; a parent and its children (group + members, expense + shares) are
+  written in one transaction and read with one join, so observers never see half an update.
+- **Encodings**: money as minor units + ISO 4217 code (never floating point), dates as ISO
+  `yyyy-MM-dd` text (sorts correctly), enums by name. Changing these is a data migration.
+- **Drivers**: `AndroidSqliteDriver` (app-private `databases/`) and `NativeSqliteDriver`
+  (`Library/Application Support/databases`) from `platformDataModule`. The iOS app links
+  `-lsqlite3` (Xcode `OTHER_LDFLAGS`).
+- **Migrations**: the version-1 schema snapshot is in `src/commonMain/sqldelight/databases/1.db`.
+  For a schema change add `1.sqm` (the SQL that upgrades 1 → 2), run
+  `./gradlew :core:data:generateCommonMainAppDatabaseSchema`, and
+  `./gradlew :core:data:verifySqlDelightMigration` proves the migration produces the new schema.
+- **Clear local data** wipes DataStore and every table in one transaction.
+- **Tests** run the real SQL against an in-memory database on both the JVM (JDBC driver) and the iOS
+  simulator (native driver).
 
 ## Settings
 
@@ -199,8 +231,9 @@ an unsigned APK.
 
 - **No backup/transfer of user data**: `allowBackup=false` + `data_extraction_rules.xml`.
 - **HTTPS only**: `network_security_config.xml` disables cleartext and trusts system CAs only.
-- **Storage**: app-private `filesDir` on Android; `Library/Application Support` on iOS (not exposed via
-  the Files app, protected by iOS Data Protection). Profile data is name + currency only.
+- **Storage**: app-private `filesDir` / `databases/` on Android; `Library/Application Support` on iOS
+  (not exposed via the Files app, protected by iOS Data Protection). The database holds trip names,
+  people's names and amounts; it is excluded from backups like everything else.
   Secrets such as auth tokens must go to Keystore/Keychain, not DataStore, when sync is added.
 - **Validation at the boundaries**: `CurrencyCode.of()` validates ISO 4217 input. Persisted data is
   re-validated on read, and corrupt data falls back to onboarding instead of crashing.
@@ -231,7 +264,11 @@ Tests are written once in `commonTest` and run on the JVM and the iOS simulator
 | `HomeViewModelTest` | greeting, zero balances, empty state, group search |
 | `MoneyFormatTest` | `97.75 JOD` / `+85.25 JOD` / `-45.00 JOD` formatting |
 | `SettingsUseCasesTest` | edit name/currency, clear data, export gating |
-| `LocalSettingsDataSourcesTest` | theme persistence, clear-all, export placeholder |
+| `LocalSettingsDataSourcesTest` | theme persistence, clear-all (DataStore + database), export placeholder |
+| `SqlDelightRepositoriesTest` | real SQLite round trips, ordering, member/share order, cascades, reopen |
+| `SettleUpPlannerTest` / `SettleUpUseCaseTest` | settle-up plan clears balances, atomic recording |
+| `ExpenseGroupDetailsTest` | balances with settlements, member spending, average, category totals |
+| `ChartScaleTest` | bar chart axis ticks and labels |
 | `SettingsViewModelTest` | sheets, name edit, currency, theme, export enablement, clear data |
 | `AppViewModelTest` | start destination, resolved once |
 | `KoinGraphTest` | complete DI graph |
