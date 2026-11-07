@@ -11,25 +11,13 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SupportedCurrencies
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ExpenseDraftError
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseGroupsUseCase
-import com.abeerapps.kmpexpensesplitter.core.ui.PeopleGroupForm
 import kotlinx.datetime.LocalDate
 
 /** Bottom sheets / dialogs the screen can show. */
-enum class AddExpenseSheet { ExpenseGroup, CreateExpenseGroup, Date, PeopleGroup, CreateGroup, PaidBy }
+enum class AddExpenseSheet { ExpenseGroup, Date, PeopleGroup, PaidBy }
 
 /** One-off messages shown in a snackbar. */
-enum class AddExpenseMessage { SaveFailed, CreateGroupFailed }
-
-/**
- * The "Add expense group" form: just a name.
- */
-@Immutable
-data class NewExpenseGroupForm(
-    val name: String = "",
-    val canCreate: Boolean = false,
-    val isCreating: Boolean = false,
-)
-
+enum class AddExpenseMessage { SaveFailed }
 
 /**
  * Everything "Add Expense" renders. Text fields hold exactly what the user typed;
@@ -40,6 +28,7 @@ data class NewExpenseGroupForm(
  * @property startDate first day of the expense; [endDate] equals it for a one-day expense.
  * @property you the device owner; the payer while no people group is selected.
  * @property groupId the selected group (required to save); `null` = "No group".
+ *   Groups are created, edited and deleted on the Manage screens; the form follows those changes.
  * @property selected ids of the group members ticked under "Split Between".
  * @property shareInputs typed percentage/amount per member, kept per split type
  *   so switching between Percentage and Exact doesn't lose either.
@@ -59,7 +48,6 @@ data class AddExpenseUiState(
     val expenseGroupsLoaded: Boolean = false,
     val expenseGroupId: String? = null,
     val expenseGroupQuery: String = "",
-    val newExpenseGroup: NewExpenseGroupForm = NewExpenseGroupForm(),
     val you: Participant? = null,
     val groups: List<PeopleGroup> = emptyList(),
     val groupId: String? = null,
@@ -71,8 +59,6 @@ data class AddExpenseUiState(
     val selected: Set<String> = emptySet(),
     val shareInputs: Map<SplitType, Map<String, String>> = emptyMap(),
     val note: String = "",
-    /** The "Add group" form inside the people group sheet (shared with "Manage people groups"). */
-    val newGroup: PeopleGroupForm = PeopleGroupForm(),
     val openSheet: AddExpenseSheet? = null,
     val isSaving: Boolean = false,
     val errors: List<ExpenseDraftError> = emptyList(),
@@ -124,18 +110,12 @@ sealed interface AddExpenseAction {
     data object ExpenseGroupClicked : AddExpenseAction
     data class ExpenseGroupQueryChanged(val value: String) : AddExpenseAction
     data class ExpenseGroupSelected(val expenseGroupId: String) : AddExpenseAction
-    data object AddExpenseGroupClicked : AddExpenseAction
-    data class NewExpenseGroupNameChanged(val value: String) : AddExpenseAction
-    data object CreateExpenseGroupClicked : AddExpenseAction
+    /** "Manage expense groups" at the bottom of the expense group sheet. */
+    data object ManageExpenseGroupsClicked : AddExpenseAction
     data object GroupClicked : AddExpenseAction
     data class GroupSelected(val groupId: String) : AddExpenseAction
-    data object AddGroupClicked : AddExpenseAction
-    data class NewGroupNameChanged(val value: String) : AddExpenseAction
-    data class MemberInputChanged(val value: String) : AddExpenseAction
-    data object AddMemberClicked : AddExpenseAction
-    data class MemberRemoved(val index: Int) : AddExpenseAction
-    data object YouRemoved : AddExpenseAction
-    data object CreateGroupClicked : AddExpenseAction
+    /** "Manage people groups" at the bottom of the people group sheet. */
+    data object ManagePeopleGroupsClicked : AddExpenseAction
     data class AmountChanged(val value: String) : AddExpenseAction
     data class CategorySelected(val category: ExpenseCategory) : AddExpenseAction
     data object PaidByClicked : AddExpenseAction
@@ -155,4 +135,10 @@ sealed interface AddExpenseAction {
 sealed interface AddExpenseEvent {
     /** The expense was stored: leave the screen. */
     data object Saved : AddExpenseEvent
+
+    /** Open "Manage expense groups" (the same screen as the Groups tab's button). */
+    data object OpenManageExpenseGroups : AddExpenseEvent
+
+    /** Open "Manage people groups" (the same screen as the Groups tab's button). */
+    data object OpenManagePeopleGroups : AddExpenseEvent
 }

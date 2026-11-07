@@ -47,7 +47,7 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.MemberNameError
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.Res
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_no_group
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.group_add
+import com.abeerapps.kmpexpensesplitter.feature.expense.resources.group_manage
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.group_member_count
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.group_sheet_empty
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.group_sheet_title
@@ -59,7 +59,7 @@ import org.jetbrains.compose.resources.stringResource
 /** Test tags for UI tests. */
 object GroupPickerTestTags {
     const val FIELD = "add_expense_group"
-    const val ADD_GROUP = "group_sheet_add"
+    const val MANAGE = "group_sheet_manage"
 }
 
 /** "People group" field: a prompt until one is picked; opens the people-group sheet. */
@@ -113,13 +113,16 @@ internal fun SplitBetweenDisabled() {
     }
 }
 
-/** Every group as a radio row, then "Add group" at the bottom. */
+/**
+ * Every group as a radio row, then "Manage people groups" at the bottom, which opens the
+ * same Manage screen as the Groups tab (add, edit, delete).
+ */
 @Composable
 internal fun GroupSheet(
     groups: List<PeopleGroup>,
     selectedId: String?,
     onSelect: (String) -> Unit,
-    onAddGroup: () -> Unit,
+    onManage: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     AppBottomSheet(stringResource(Res.string.group_sheet_title), onDismiss) {
@@ -169,9 +172,9 @@ internal fun GroupSheet(
             }
         }
         PrimaryButton(
-            text = stringResource(Res.string.group_add),
-            onClick = onAddGroup,
-            modifier = Modifier.padding(top = ExpenseSplitterTheme.spacing.sm).testTag(GroupPickerTestTags.ADD_GROUP),
+            text = stringResource(Res.string.group_manage),
+            onClick = onManage,
+            modifier = Modifier.padding(top = ExpenseSplitterTheme.spacing.sm).testTag(GroupPickerTestTags.MANAGE),
         )
     }
 }

@@ -18,12 +18,9 @@ import com.abeerapps.kmpexpensesplitter.core.domain.repository.ExpenseRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.PeopleGroupRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.repository.UserProfileRepository
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.AddExpenseUseCase
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreateExpenseGroupUseCase
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreatePeopleGroupUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpensesUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ExpenseDraftError
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.MemberNameError
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObservePeopleGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveUserProfileUseCase
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +50,6 @@ class AddExpenseViewModelTest {
     private val groups = FakeGroups()
     private val aqaba = ExpenseGroup("t1", "Aqaba Trip", today)
     private val trips = FakeExpenseGroups(listOf(aqaba))
-    private var nextId = 0
 
     private val you = Participant(Participant.YOU_ID, "Ahmad")
     private val sara = Participant("s", "Sara")
@@ -69,12 +65,10 @@ class AddExpenseViewModelTest {
 
     private fun viewModel(savedState: SavedStateHandle = SavedStateHandle()) = AddExpenseViewModel(
         observeExpenseGroups = ObserveExpenseGroupsUseCase(trips),
-        createExpenseGroup = CreateExpenseGroupUseCase(trips, dateProvider, newId = { "t${nextId++}" }),
         observeGroupList = ObservePeopleGroupsUseCase(groups, profiles),
         observeUserProfile = ObserveUserProfileUseCase(profiles),
         addExpense = AddExpenseUseCase(expenses, newId = { "e1" }),
         observeExpenses = ObserveExpensesUseCase(expenses),
-        createGroup = CreatePeopleGroupUseCase(groups, profiles, dateProvider, newId = { "n${nextId++}" }),
         dateProvider = dateProvider,
         savedStateHandle = savedState,
     )
@@ -140,34 +134,6 @@ class AddExpenseViewModelTest {
     }
 
     @Test
-    fun `adding a group creates it with you and selects it`() {
-        val vm = viewModel()
-        vm.onAction(AddExpenseAction.GroupClicked)
-        vm.onAction(AddExpenseAction.AddGroupClicked)
-        assertEquals(AddExpenseSheet.CreateGroup, vm.uiState.value.openSheet)
-        assertFalse(vm.uiState.value.newGroup.canSave)
-
-        vm.onAction(AddExpenseAction.NewGroupNameChanged("Aqaba"))
-        vm.onAction(AddExpenseAction.MemberInputChanged("Sara"))
-        vm.onAction(AddExpenseAction.AddMemberClicked)
-        vm.onAction(AddExpenseAction.MemberInputChanged("sara"))
-        vm.onAction(AddExpenseAction.AddMemberClicked)
-        assertEquals(MemberNameError.Duplicate, vm.uiState.value.newGroup.memberError)
-        // A valid name still in the input is included on "Add".
-        vm.onAction(AddExpenseAction.MemberInputChanged("Omar"))
-        assertTrue(vm.uiState.value.newGroup.canSave)
-
-        vm.onAction(AddExpenseAction.CreateGroupClicked)
-
-        val state = vm.uiState.value
-        assertNull(state.openSheet)
-        assertEquals("Aqaba", state.group?.name)
-        assertEquals(listOf("Ahmad", "Sara", "Omar"), state.participants.map { it.name })
-        assertEquals(state.participants.map { it.id }.toSet(), state.selected)
-        assertEquals(listOf("Aqaba"), groups.groups.value.map { it.name })
-    }
-
-    @Test
     fun `existing groups preselect the first one`() {
         val older = PeopleGroup("g0", "Older", listOf(you), LocalDate(2026, 1, 1))
         groups.groups.value = listOf(trip, older)
@@ -179,53 +145,71 @@ class AddExpenseViewModelTest {
     }
 
     @Test
-    fun `add needs a group name and at least one member`() {
+    fun `manage buttons close the sheet and open the manage screens`() = runTest {
         val vm = viewModel()
-        vm.onAction(AddExpenseAction.AddGroupClicked)
-        assertFalse(vm.uiState.value.newGroup.canSave) // You're in, but no name yet.
+        vm.events.test {
+            vm.onAction(AddExpenseAction.ExpenseGroupClicked)
+            vm.onAction(AddExpenseAction.ManageExpenseGroupsClicked)
+            assertNull(vm.uiState.value.openSheet)
+            assertEquals(AddExpenseEvent.OpenManageExpenseGroups, awaitItem())
 
-        vm.onAction(AddExpenseAction.NewGroupNameChanged("Solo"))
-        assertTrue(vm.uiState.value.newGroup.canSave) // You alone are enough.
-
-        vm.onAction(AddExpenseAction.YouRemoved)
-        assertFalse(vm.uiState.value.newGroup.includeYou)
-        assertFalse(vm.uiState.value.newGroup.canSave) // Nobody left.
-
-        vm.onAction(AddExpenseAction.MemberInputChanged("Sara"))
-        vm.onAction(AddExpenseAction.AddMemberClicked)
-        assertTrue(vm.uiState.value.newGroup.canSave)
-        vm.onAction(AddExpenseAction.MemberRemoved(0))
-        assertFalse(vm.uiState.value.newGroup.canSave)
+            vm.onAction(AddExpenseAction.GroupClicked)
+            vm.onAction(AddExpenseAction.ManagePeopleGroupsClicked)
+            assertNull(vm.uiState.value.openSheet)
+            assertEquals(AddExpenseEvent.OpenManagePeopleGroups, awaitItem())
+        }
     }
 
     @Test
-    fun `a group created without you makes its first member the payer`() {
+    fun `groups added on the manage screens are selected when none is`() {
+        trips.groups.value = emptyList()
         val vm = viewModel()
-        vm.onAction(AddExpenseAction.AddGroupClicked)
-        vm.onAction(AddExpenseAction.NewGroupNameChanged("Parents"))
-        vm.onAction(AddExpenseAction.YouRemoved)
-        vm.onAction(AddExpenseAction.MemberInputChanged("Mom"))
-        vm.onAction(AddExpenseAction.AddMemberClicked)
-        vm.onAction(AddExpenseAction.MemberInputChanged("Dad"))
-        vm.onAction(AddExpenseAction.CreateGroupClicked)
+        vm.onAction(AddExpenseAction.TitleChanged("Lunch")) // Typed before leaving: kept.
+        assertNull(vm.uiState.value.expenseGroup)
+        assertNull(vm.uiState.value.group)
+
+        trips.groups.value = listOf(aqaba)
+        groups.groups.value = listOf(trip)
 
         val state = vm.uiState.value
-        assertEquals(listOf("Mom", "Dad"), state.participants.map { it.name })
-        assertEquals(state.participants.first().id, state.paidBy)
+        assertEquals(aqaba, state.expenseGroup)
+        assertEquals(trip, state.group)
+        assertEquals(setOf(you.id, sara.id), state.selected)
+        assertEquals("Lunch", state.title)
     }
 
     @Test
-    fun `typing your own name after removing yourself adds you back`() {
+    fun `deleting the selected groups on the manage screens falls back to the newest`() {
+        val petra = ExpenseGroup("t2", "Petra", today)
+        val family = PeopleGroup("g2", "Family", listOf(you), today)
+        trips.groups.value = listOf(petra, aqaba)
+        groups.groups.value = listOf(family, trip)
         val vm = viewModel()
-        vm.onAction(AddExpenseAction.AddGroupClicked)
-        vm.onAction(AddExpenseAction.YouRemoved)
-        vm.onAction(AddExpenseAction.MemberInputChanged(" ahmad "))
-        vm.onAction(AddExpenseAction.AddMemberClicked)
+        vm.onAction(AddExpenseAction.ExpenseGroupSelected(aqaba.id))
+        vm.onAction(AddExpenseAction.GroupSelected(trip.id))
 
-        val form = vm.uiState.value.newGroup
-        assertTrue(form.includeYou)
-        assertTrue(form.members.isEmpty())
-        assertEquals("", form.memberInput)
+        trips.groups.value = listOf(petra)
+        groups.groups.value = listOf(family)
+
+        assertEquals(petra, vm.uiState.value.expenseGroup)
+        assertEquals(family, vm.uiState.value.group)
+        assertEquals(setOf(you.id), vm.uiState.value.selected)
+    }
+
+    @Test
+    fun `editing the selected group's members on the manage screen updates split between`() {
+        groups.groups.value = listOf(trip)
+        val vm = viewModel()
+        vm.onAction(AddExpenseAction.PaidByClicked)
+        vm.onAction(AddExpenseAction.PayerSelected(sara.id))
+
+        val omar = Participant("o", "Omar")
+        groups.groups.value = listOf(trip.copy(members = listOf(you, omar))) // Sara removed, Omar added.
+
+        val state = vm.uiState.value
+        assertEquals(listOf(you, omar), state.participants)
+        assertEquals(setOf(you.id, omar.id), state.selected)
+        assertEquals(you.id, state.paidBy) // Sara can't pay any more.
     }
 
     @Test
@@ -403,28 +387,6 @@ class AddExpenseViewModelTest {
         vm.onAction(AddExpenseAction.ExpenseGroupSelected(aqaba.id))
         assertEquals(aqaba, vm.uiState.value.expenseGroup)
         assertNull(vm.uiState.value.openSheet)
-    }
-
-    @Test
-    fun `adding an expense group starts from the search text then selects it`() {
-        val vm = viewModel()
-        vm.onAction(AddExpenseAction.ExpenseGroupClicked)
-        vm.onAction(AddExpenseAction.ExpenseGroupQueryChanged("  Petra  "))
-        vm.onAction(AddExpenseAction.AddExpenseGroupClicked)
-
-        assertEquals(AddExpenseSheet.CreateExpenseGroup, vm.uiState.value.openSheet)
-        assertEquals("Petra", vm.uiState.value.newExpenseGroup.name)
-        assertTrue(vm.uiState.value.newExpenseGroup.canCreate)
-
-        vm.onAction(AddExpenseAction.NewExpenseGroupNameChanged(" "))
-        assertFalse(vm.uiState.value.newExpenseGroup.canCreate)
-        vm.onAction(AddExpenseAction.NewExpenseGroupNameChanged("Petra Trip"))
-        vm.onAction(AddExpenseAction.CreateExpenseGroupClicked)
-
-        val state = vm.uiState.value
-        assertNull(state.openSheet)
-        assertEquals("Petra Trip", state.expenseGroup?.name)
-        assertEquals(listOf("Petra Trip", "Aqaba Trip"), trips.groups.value.map { it.name })
     }
 
     @Test

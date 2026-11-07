@@ -68,7 +68,13 @@ fun AppNavHost(
             )
         }
         composable<AppDestination.AddExpense> {
-            AddExpenseScreen(onBack = navController::navigateUp, onSaved = navController::navigateUp)
+            AddExpenseScreen(
+                onBack = navController::navigateUp,
+                onSaved = navController::navigateUp,
+                // Same screens as the Groups tab buttons; back returns to the form as it was.
+                onManageExpenseGroups = { navController.navigate(AppDestination.ManageExpenseGroups) { launchSingleTop = true } },
+                onManagePeopleGroups = { navController.navigate(AppDestination.ManagePeopleGroups) { launchSingleTop = true } },
+            )
         }
         composable<AppDestination.ExpenseDetails> {
             ExpenseDetailsScreen(

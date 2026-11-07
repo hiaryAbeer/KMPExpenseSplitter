@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.abeerapps.kmpexpensesplitter.core.domain.config.DateProvider
 import com.abeerapps.kmpexpensesplitter.core.domain.model.DecimalInput
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Expense
-import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Money
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
@@ -15,17 +14,11 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SupportedCurrencies
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.AddExpenseResult
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.AddExpenseUseCase
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreateExpenseGroupResult
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreateExpenseGroupUseCase
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreatePeopleGroupResult
-import com.abeerapps.kmpexpensesplitter.core.domain.usecase.CreatePeopleGroupUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ExpenseDraft
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpenseGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveExpensesUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObservePeopleGroupsUseCase
 import com.abeerapps.kmpexpensesplitter.core.domain.usecase.ObserveUserProfileUseCase
-import com.abeerapps.kmpexpensesplitter.core.ui.PeopleGroupForm
-import com.abeerapps.kmpexpensesplitter.core.ui.PeopleGroupFormEditor
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +31,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Presentation logic for "Add Expense", including picking and creating the group.
+ * Presentation logic for "Add Expense", including picking the expense group and people group.
+ * Groups are managed on the Manage screens; the form follows their changes live.
  * Shared by Android and iOS.
  *
  * The whole form is one [MutableStateFlow] updated synchronously on each action,
@@ -48,12 +42,10 @@ import kotlinx.coroutines.launch
  */
 class AddExpenseViewModel(
     observeExpenseGroups: ObserveExpenseGroupsUseCase,
-    private val createExpenseGroup: CreateExpenseGroupUseCase,
     observeGroupList: ObservePeopleGroupsUseCase,
     observeUserProfile: ObserveUserProfileUseCase,
     private val addExpense: AddExpenseUseCase,
     private val observeExpenses: ObserveExpensesUseCase,
-    private val createGroup: CreatePeopleGroupUseCase,
     dateProvider: DateProvider,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -84,8 +76,10 @@ class AddExpenseViewModel(
                         firstLoad && next.expenseGroupId == null -> next.copy(
                             expenseGroupId = trips.firstOrNull { it.id == requestedExpenseGroupId }?.id ?: trips.firstOrNull()?.id,
                         )
-                        // The selected one was removed (e.g. data cleared).
-                        next.expenseGroupId != null && next.expenseGroup == null -> next.copy(expenseGroupId = null)
+                        // The selected one was deleted (Manage screen, data cleared): fall back to the newest.
+                        next.expenseGroupId != null && next.expenseGroup == null -> next.copy(expenseGroupId = trips.firstOrNull()?.id)
+                        // None yet, and one was just added on the Manage screen: select it.
+                        next.expenseGroupId == null && trips.isNotEmpty() -> next.copy(expenseGroupId = trips.first().id)
                         else -> next
                     }
                 }
@@ -101,11 +95,14 @@ class AddExpenseViewModel(
                             you = profile?.let { Participant(Participant.YOU_ID, it.name) },
                             groups = groups,
                         )
+                        val updated = next.group
                         when {
-                            // First load with existing groups: preselect the first (newest) one.
-                            state.isLoading && next.groupId == null && groups.isNotEmpty() -> next.withGroup(groups.first())
-                            // The selected group was removed (e.g. data cleared): back to "No group".
-                            next.groupId != null && next.group == null -> next.withGroup(null)
+                            // No group yet (first load, or one was just added on the Manage screen): pick the newest.
+                            next.groupId == null && groups.isNotEmpty() -> next.withGroup(groups.first())
+                            // The selected group was deleted (Manage screen, data cleared): fall back to the newest.
+                            next.groupId != null && updated == null -> next.withGroup(groups.firstOrNull())
+                            // Its members were edited on the Manage screen: everyone in it shares again.
+                            updated != null && updated.members != state.group?.members -> next.withGroup(updated)
                             else -> next.withValidPayer()
                         }
                     }
@@ -124,36 +121,13 @@ class AddExpenseViewModel(
                 val exists = state.expenseGroups.any { it.id == action.expenseGroupId }
                 state.copy(expenseGroupId = if (exists) action.expenseGroupId else state.expenseGroupId, openSheet = null)
             }
-            AddExpenseAction.AddExpenseGroupClicked -> _uiState.update { state ->
-                // Start from the search text: "searched, not found, add it" in one step.
-                val name = state.expenseGroupQuery.trim().take(ExpenseGroup.MAX_NAME_LENGTH)
-                state.copy(
-                    openSheet = AddExpenseSheet.CreateExpenseGroup,
-                    newExpenseGroup = NewExpenseGroupForm(name = name, canCreate = createExpenseGroup.validate(name) == null),
-                )
-            }
-            is AddExpenseAction.NewExpenseGroupNameChanged ->
-                if (action.value.length <= ExpenseGroup.MAX_NAME_LENGTH) {
-                    _uiState.update {
-                        it.copy(newExpenseGroup = it.newExpenseGroup.copy(name = action.value, canCreate = createExpenseGroup.validate(action.value) == null))
-                    }
-                }
-            AddExpenseAction.CreateExpenseGroupClicked -> createNewExpenseGroup()
+            AddExpenseAction.ManageExpenseGroupsClicked -> openManageScreen(AddExpenseEvent.OpenManageExpenseGroups)
             AddExpenseAction.GroupClicked -> _uiState.update { it.copy(openSheet = AddExpenseSheet.PeopleGroup) }
             is AddExpenseAction.GroupSelected -> updateForm { state ->
                 val group = state.groups.firstOrNull { it.id == action.groupId }
                 (if (group == null || group.id == state.groupId) state else state.withGroup(group)).copy(openSheet = null)
             }
-            AddExpenseAction.AddGroupClicked ->
-                _uiState.update { it.copy(openSheet = AddExpenseSheet.CreateGroup, newGroup = PeopleGroupForm()) }
-            is AddExpenseAction.NewGroupNameChanged -> updateNewGroup { form, you -> PeopleGroupFormEditor.nameChanged(form, action.value, you) }
-            is AddExpenseAction.MemberInputChanged ->
-                updateNewGroup { form, you -> PeopleGroupFormEditor.memberInputChanged(form, action.value, you) }
-            AddExpenseAction.AddMemberClicked -> updateNewGroup { form, you -> PeopleGroupFormEditor.addMember(form, you) }
-            is AddExpenseAction.MemberRemoved ->
-                updateNewGroup { form, you -> PeopleGroupFormEditor.removeMember(form, action.index, you) }
-            AddExpenseAction.YouRemoved -> updateNewGroup { form, you -> PeopleGroupFormEditor.removeYou(form, you) }
-            AddExpenseAction.CreateGroupClicked -> createNewGroup()
+            AddExpenseAction.ManagePeopleGroupsClicked -> openManageScreen(AddExpenseEvent.OpenManagePeopleGroups)
             is AddExpenseAction.AmountChanged ->
                 DecimalInput.sanitize(action.value)?.let { amount -> updateForm { it.copy(amount = amount) } }
             is AddExpenseAction.CategorySelected -> updateForm { it.copy(category = action.category) }
@@ -183,63 +157,11 @@ class AddExpenseViewModel(
         }
     }
 
-    private fun createNewExpenseGroup() {
-        val form = _uiState.value.newExpenseGroup
-        if (!form.canCreate || form.isCreating) return
-        _uiState.update { it.copy(newExpenseGroup = form.copy(isCreating = true)) }
-        viewModelScope.launch {
-            when (val result = createExpenseGroup(form.name)) {
-                is CreateExpenseGroupResult.Success -> updateForm { current ->
-                    val created = result.group
-                    val trips = if (current.expenseGroups.any { it.id == created.id }) current.expenseGroups
-                    else listOf(created) + current.expenseGroups
-                    current.copy(
-                        expenseGroups = trips,
-                        expenseGroupId = created.id,
-                        openSheet = null,
-                        newExpenseGroup = NewExpenseGroupForm(),
-                    )
-                }
-                is CreateExpenseGroupResult.Invalid, CreateExpenseGroupResult.StorageError -> _uiState.update {
-                    it.copy(
-                        newExpenseGroup = it.newExpenseGroup.copy(isCreating = false),
-                        message = AddExpenseMessage.CreateGroupFailed,
-                    )
-                }
-            }
-        }
+    /** Closes the sheet and leaves for a Manage screen; the form keeps everything typed so far. */
+    private fun openManageScreen(event: AddExpenseEvent) {
+        _uiState.update { it.copy(openSheet = null) }
+        viewModelScope.launch { _events.send(event) }
     }
-
-    // region People group creation (rules shared with "Manage people groups" via PeopleGroupFormEditor)
-
-    private fun createNewGroup() {
-        val state = _uiState.value
-        val form = state.newGroup
-        if (!form.canSave || form.isSaving) return
-        val yourName = state.you?.name
-        val members = PeopleGroupFormEditor.candidateMembers(form, yourName).map { it.name }
-        val includeYou = PeopleGroupFormEditor.candidateIncludesYou(form, yourName)
-        _uiState.update { it.copy(newGroup = form.copy(isSaving = true)) }
-        viewModelScope.launch {
-            when (val result = createGroup(form.name, members, includeYou)) {
-                is CreatePeopleGroupResult.Success -> updateForm { current ->
-                    val created = result.group
-                    val groups = if (current.groups.any { it.id == created.id }) current.groups else listOf(created) + current.groups
-                    current.copy(groups = groups, openSheet = null, newGroup = PeopleGroupForm()).withGroup(created)
-                }
-                is CreatePeopleGroupResult.Invalid, CreatePeopleGroupResult.NoProfile, CreatePeopleGroupResult.StorageError ->
-                    _uiState.update {
-                        it.copy(newGroup = it.newGroup.copy(isSaving = false), message = AddExpenseMessage.CreateGroupFailed)
-                    }
-            }
-        }
-    }
-
-    private fun updateNewGroup(transform: (PeopleGroupForm, yourName: String?) -> PeopleGroupForm) {
-        _uiState.update { state -> state.copy(newGroup = transform(state.newGroup, state.you?.name)) }
-    }
-
-    // endregion
 
     private fun onShareChanged(participantId: String, value: String) {
         val type = _uiState.value.splitType

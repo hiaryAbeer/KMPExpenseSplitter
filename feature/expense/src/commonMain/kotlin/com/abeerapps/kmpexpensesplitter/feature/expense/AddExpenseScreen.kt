@@ -57,9 +57,6 @@ import com.abeerapps.kmpexpensesplitter.core.domain.model.CurrencyCode
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.PeopleGroup
 import com.abeerapps.kmpexpensesplitter.core.domain.model.Participant
-import com.abeerapps.kmpexpensesplitter.core.ui.CreateExpenseGroupSheet
-import com.abeerapps.kmpexpensesplitter.core.ui.PeopleGroupSheet
-import com.abeerapps.kmpexpensesplitter.core.ui.PeopleGroupSheetCallbacks
 import com.abeerapps.kmpexpensesplitter.core.domain.model.SplitType
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.Res
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_back
@@ -68,7 +65,6 @@ import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_la
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_label_date
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_label_expense_group
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_label_group
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.new_group_failed
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_label_note
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_label_paid_by
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_label_split_between
@@ -98,17 +94,23 @@ object AddExpenseTestTags {
  *
  * @param onBack back arrow tapped.
  * @param onSaved the expense was stored; the caller leaves the screen.
+ * @param onManageExpenseGroups "Manage expense groups" tapped in the expense group sheet.
+ * @param onManagePeopleGroups "Manage people groups" tapped in the people group sheet.
  */
 @Composable
 fun AddExpenseScreen(
     onBack: () -> Unit,
     onSaved: () -> Unit,
+    onManageExpenseGroups: () -> Unit,
+    onManagePeopleGroups: () -> Unit,
     viewModel: AddExpenseViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
             AddExpenseEvent.Saved -> onSaved()
+            AddExpenseEvent.OpenManageExpenseGroups -> onManageExpenseGroups()
+            AddExpenseEvent.OpenManagePeopleGroups -> onManagePeopleGroups()
         }
     }
     AddExpenseContent(uiState = uiState, onAction = viewModel::onAction, onBack = onBack)
@@ -125,12 +127,10 @@ fun AddExpenseContent(
     val spacing = ExpenseSplitterTheme.spacing
     val snackbarHostState = remember { SnackbarHostState() }
     val saveFailed = stringResource(Res.string.add_expense_save_failed)
-    val createGroupFailed = stringResource(Res.string.new_group_failed)
 
     LaunchedEffect(uiState.message) {
         val text = when (uiState.message) {
             AddExpenseMessage.SaveFailed -> saveFailed
-            AddExpenseMessage.CreateGroupFailed -> createGroupFailed
             null -> return@LaunchedEffect
         }
         snackbarHostState.showSnackbar(text)
@@ -172,36 +172,15 @@ fun AddExpenseContent(
             selectedId = uiState.expenseGroupId,
             onQueryChange = { onAction(AddExpenseAction.ExpenseGroupQueryChanged(it)) },
             onSelect = { onAction(AddExpenseAction.ExpenseGroupSelected(it)) },
-            onAdd = { onAction(AddExpenseAction.AddExpenseGroupClicked) },
-            onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
-        )
-        AddExpenseSheet.CreateExpenseGroup -> CreateExpenseGroupSheet(
-            name = uiState.newExpenseGroup.name,
-            canCreate = uiState.newExpenseGroup.canCreate,
-            isCreating = uiState.newExpenseGroup.isCreating,
-            onNameChange = { onAction(AddExpenseAction.NewExpenseGroupNameChanged(it)) },
-            onCreate = { onAction(AddExpenseAction.CreateExpenseGroupClicked) },
+            onManage = { onAction(AddExpenseAction.ManageExpenseGroupsClicked) },
             onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
         )
         AddExpenseSheet.PeopleGroup -> GroupSheet(
             groups = uiState.groups,
             selectedId = uiState.groupId,
             onSelect = { onAction(AddExpenseAction.GroupSelected(it)) },
-            onAddGroup = { onAction(AddExpenseAction.AddGroupClicked) },
+            onManage = { onAction(AddExpenseAction.ManagePeopleGroupsClicked) },
             onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
-        )
-        AddExpenseSheet.CreateGroup -> PeopleGroupSheet(
-            form = uiState.newGroup,
-            yourName = uiState.you?.name.orEmpty(),
-            callbacks = PeopleGroupSheetCallbacks(
-                onNameChange = { onAction(AddExpenseAction.NewGroupNameChanged(it)) },
-                onMemberInputChange = { onAction(AddExpenseAction.MemberInputChanged(it)) },
-                onAddMember = { onAction(AddExpenseAction.AddMemberClicked) },
-                onRemoveMember = { onAction(AddExpenseAction.MemberRemoved(it)) },
-                onRemoveYou = { onAction(AddExpenseAction.YouRemoved) },
-                onSave = { onAction(AddExpenseAction.CreateGroupClicked) },
-                onDismiss = { onAction(AddExpenseAction.SheetDismissed) },
-            ),
         )
         AddExpenseSheet.PaidBy -> PaidBySheet(
             participants = uiState.payerOptions,

@@ -18,10 +18,10 @@
     <string name="add_expense_no_expense_group">Add expense group</string>
     <string name="expense_group_sheet_title">Expense groups</string>
     <string name="expense_group_search_placeholder">Search expense groups</string>
-    <string name="expense_group_empty">No expense groups yet. Add one, e.g. a trip.</string>
+    <string name="expense_group_empty">No expense groups yet. Add one, e.g. a trip, in Manage expense groups.</string>
     <!-- %1$s = search text -->
     <string name="expense_group_no_results">No expense group matches “%1$s”.</string>
-    <string name="expense_group_add">Add expense group</string>
+    <string name="expense_group_manage">Manage expense groups</string>
     <string name="date_sheet_title">Expense date</string>
     <string name="date_sheet_hint">Tap a day, or tap a second day to set an end date.</string>
     <string name="date_sheet_done">Done</string>
@@ -32,9 +32,8 @@
         <item quantity="other">%1$d members</item>
     </plurals>
     <string name="group_sheet_title">Select people group</string>
-    <string name="group_sheet_empty">No groups yet. Add one to split this expense.</string>
-    <string name="group_add">Add group</string>
-    <string name="new_group_failed">Couldn’t create the group. Please try again.</string>
+    <string name="group_sheet_empty">No groups yet. Add one in Manage people groups to split this expense.</string>
+    <string name="group_manage">Manage people groups</string>
     <string name="add_expense_label_amount">Amount</string>
     <string name="add_expense_amount_placeholder">0.00</string>
     <string name="add_expense_label_category">Category</string>

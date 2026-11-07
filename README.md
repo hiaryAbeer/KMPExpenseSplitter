@@ -4,6 +4,26 @@ Split shared expenses between friends, on Android and iOS, from one Kotlin codeb
 Business logic, data, presentation (ViewModels) **and UI** (Compose Multiplatform) are shared;
 each platform keeps a thin native entry point.
 
+## Screenshots
+
+Android, light and dark theme (iOS renders the same shared Compose UI).
+
+| Home | Groups | Group Details: Expenses | Group Details: Balances |
+|---|---|---|---|
+| <img src="docs/screenshots/home.png" width="200" alt="Home"> | <img src="docs/screenshots/groups.png" width="200" alt="Groups"> | <img src="docs/screenshots/details_expenses.png" width="200" alt="Group Details: Expenses"> | <img src="docs/screenshots/details_balances.png" width="200" alt="Group Details: Balances"> |
+
+| Settle Up | Stats: summary | Stats: charts | Expense Details |
+|---|---|---|---|
+| <img src="docs/screenshots/settle_up.png" width="200" alt="Settle Up"> | <img src="docs/screenshots/stats_summary.png" width="200" alt="Stats: summary"> | <img src="docs/screenshots/stats_charts.png" width="200" alt="Stats: charts"> | <img src="docs/screenshots/expense_details.png" width="200" alt="Expense Details"> |
+
+| Add Expense | People group sheet | Manage people groups | Settings |
+|---|---|---|---|
+| <img src="docs/screenshots/add_expense.png" width="200" alt="Add Expense"> | <img src="docs/screenshots/people_sheet.png" width="200" alt="People group sheet"> | <img src="docs/screenshots/manage_people.png" width="200" alt="Manage people groups"> | <img src="docs/screenshots/settings.png" width="200" alt="Settings"> |
+
+| Home (dark) | Stats (dark) |
+|---|---|
+| <img src="docs/screenshots/home_dark.png" width="200" alt="Home (dark)"> | <img src="docs/screenshots/stats_dark.png" width="200" alt="Stats (dark)"> |
+
 ## Architecture
 
 Clean Architecture with feature modules. Dependencies only point inward.
@@ -123,9 +143,9 @@ Tapping an expense in Group Details opens `ExpenseDetailsScreen` (`:feature:expe
 
 ### Manage expense groups / people groups
 
-Opened from the Groups tab header. Each has a search field, the list with **edit** and **delete**
-per item, and an **Add** button. Add/Edit use the same sheets as Add Expense
-(`CreateExpenseGroupSheet`, `PeopleGroupSheet` in `:core:ui`).
+Opened from the Groups tab header and from the **Manage** buttons in Add Expense's group sheets.
+Each has a search field, the list with **edit** and **delete** per item, and an **Add** button.
+Add/Edit use the shared sheets in `:core:ui` (`CreateExpenseGroupSheet`, `PeopleGroupSheet`).
 
 - **Expense groups**: rename keeps the id. Delete asks for confirmation and also deletes the group's
   expenses ("Its 2 expenses will be deleted too").
@@ -151,15 +171,16 @@ Two kinds of group:
 
 One expense group can contain expenses split within different people groups.
 
-- **Expense group**: preselects the newest one. Its sheet has a search field (by name) and **Add
-  expense group**, which opens a name form prefilled with the search text; "Add" creates and selects it.
+- **Expense group**: preselects the newest one. Its sheet has a search field (by name) and **Manage
+  expense groups**, which opens the same screen as the Groups tab button (add, rename, delete).
 - **Date**: a calendar sheet (dates up to today). The first tap sets a one-day expense (start = end);
   a second tap sets the end date, e.g. a hotel stay. Shown as "Today, …" or "November 2 – November 4, 2026".
 - **People group**: preselects the first (newest) group when groups exist, else "No group". The group
-  sheet's **Add group** opens a form: group name + members. You are listed first and can be removed
-  like anyone else (typing your own name adds you back). "Add" is enabled with a name and at least
-  one member; it creates the group (`CreateGroupUseCase`) and selects it. Member names must be unique
-  (ignoring case, including yours while you're in the group).
+  sheet's **Manage people groups** opens the same screen as the Groups tab button (add, edit, delete).
+- **Coming back from a Manage screen** keeps everything typed. The form follows the changes live:
+  with nothing selected, a newly added group is selected; a deleted selected group falls back to the
+  newest; edited members of the selected people group are all ticked again (and the payer is kept
+  only if still a member).
 - **Split Between** lists the selected people group's members, all ticked; it is disabled without one.
 
 - **Split rules live in the domain** (`SplitCalculator`): *Equal* divides between ticked people,

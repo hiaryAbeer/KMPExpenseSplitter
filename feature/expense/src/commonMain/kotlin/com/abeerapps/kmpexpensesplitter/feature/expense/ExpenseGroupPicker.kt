@@ -40,8 +40,8 @@ import com.abeerapps.kmpexpensesplitter.core.designsystem.theme.ExpenseSplitterT
 import com.abeerapps.kmpexpensesplitter.core.domain.model.ExpenseGroup
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.Res
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.add_expense_no_expense_group
-import com.abeerapps.kmpexpensesplitter.feature.expense.resources.expense_group_add
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.expense_group_empty
+import com.abeerapps.kmpexpensesplitter.feature.expense.resources.expense_group_manage
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.expense_group_no_results
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.expense_group_search_placeholder
 import com.abeerapps.kmpexpensesplitter.feature.expense.resources.expense_group_sheet_title
@@ -52,7 +52,7 @@ import org.jetbrains.compose.resources.stringResource
 object ExpenseGroupPickerTestTags {
     const val FIELD = "add_expense_expense_group"
     const val SEARCH = "expense_group_search"
-    const val ADD = "expense_group_add"
+    const val MANAGE = "expense_group_manage"
 }
 
 /** "Expense Group" field under Title: a prompt until one is picked; opens the expense group sheet. */
@@ -85,7 +85,10 @@ internal fun ExpenseGroupField(expenseGroup: ExpenseGroup?, onClick: () -> Unit)
     }
 }
 
-/** Search, the matching expense groups as radio rows, and "Add expense group" at the bottom. */
+/**
+ * Search, the matching expense groups as radio rows, and "Manage expense groups" at the bottom,
+ * which opens the same Manage screen as the Groups tab (add, rename, delete).
+ */
 @Composable
 internal fun ExpenseGroupSheet(
     query: String,
@@ -94,7 +97,7 @@ internal fun ExpenseGroupSheet(
     selectedId: String?,
     onQueryChange: (String) -> Unit,
     onSelect: (String) -> Unit,
-    onAdd: () -> Unit,
+    onManage: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     AppBottomSheet(stringResource(Res.string.expense_group_sheet_title), onDismiss) {
@@ -140,9 +143,9 @@ internal fun ExpenseGroupSheet(
             }
         }
         PrimaryButton(
-            text = stringResource(Res.string.expense_group_add),
-            onClick = onAdd,
-            modifier = Modifier.padding(top = ExpenseSplitterTheme.spacing.sm).testTag(ExpenseGroupPickerTestTags.ADD),
+            text = stringResource(Res.string.expense_group_manage),
+            onClick = onManage,
+            modifier = Modifier.padding(top = ExpenseSplitterTheme.spacing.sm).testTag(ExpenseGroupPickerTestTags.MANAGE),
         )
     }
 }
